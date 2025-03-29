@@ -17,37 +17,40 @@
 </head>
 <body>
   <div id="gameBox">等待中...</div>
-  <p style="text-align:center;">分數：<span id="score">0</span></p>
+  <p style="text-align:center;"><span id="score"></span></p>
 
   <script>
-    let box = document.getElementById('gameBox');
-    let score = 0;
+    const box = document.getElementById('gameBox');
+    const scoreEl = document.getElementById('score');  // 我們會用它顯示反應時間
     let ready = false;
+    let startTime = 0;
 
     function startGame() {
       box.innerText = "準備...";
       box.style.backgroundColor = "red";
       ready = false;
+      scoreEl.innerText = "";
+      
 
       setTimeout(() => {
         box.style.backgroundColor = "green";
-        box.innerText = "點我！";
+        box.innerText = "GO！";
         ready = true;
-      }, Math.random() * 3000 + 2000); // 隨機時間
+        startTime = Date.now(); 
+      }, Math.random() * 4000 + 2000); // 隨機時間
     }
 
     box.onclick = () => {
       if (ready) {
-        score += 1;
-        document.getElementById('score').innerText = score;
-        startGame();
+        const reactionTime = Date.now() - startTime;
+        scoreEl.innerText = `你的反應時間：${reactionTime} 毫秒`;
+        startGame();  // 重新開始下一輪
       } else {
         alert("太早了！");
-        score = 0;
-        document.getElementById('score').innerText = score;
+        scoreEl.innerText = "請等綠燈再點！";
         startGame();
       }
-    }
+    };
 
     startGame();
   </script>
