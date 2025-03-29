@@ -12,7 +12,7 @@ ClickFast is a fast-paced web game designed to test your reflexes and clicking s
 
 ## 🎮 Play Now
 
-Coming soon: [https://your-username.github.io/ClickFast](https://your-username.github.io/ClickFast)
+Coming soon: [https://your-username.github.io/ClickFast]([https://your-username.github.io/ClickFast](https://clickfast.onrender.com))
 
 ## 🛠️ Tech Stack
 
