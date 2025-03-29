@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>反應力遊戲</title>
+  <style>
+    #gameBox {
+      width: 300px;
+      height: 300px;
+      background-color: red;
+      margin: 50px auto;
+      text-align: center;
+      line-height: 300px;
+      font-size: 24px;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div id="gameBox">等待中...</div>
+  <p style="text-align:center;">分數：<span id="score">0</span></p>
+
+  <script>
+    let box = document.getElementById('gameBox');
+    let score = 0;
+    let ready = false;
+
+    function startGame() {
+      box.innerText = "準備...";
+      box.style.backgroundColor = "red";
+      ready = false;
+
+      setTimeout(() => {
+        box.style.backgroundColor = "green";
+        box.innerText = "點我！";
+        ready = true;
+      }, Math.random() * 3000 + 2000); // 隨機時間
+    }
+
+    box.onclick = () => {
+      if (ready) {
+        score += 1;
+        document.getElementById('score').innerText = score;
+        startGame();
+      } else {
+        alert("太早了！");
+        score = 0;
+        document.getElementById('score').innerText = score;
+        startGame();
+      }
+    }
+
+    startGame();
+  </script>
+</body>
+</html>
