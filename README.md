@@ -1,28 +1,30 @@
 # ClickFast 🖱️⚡
 
-ClickFast is a fast-paced web game designed to test your reflexes and clicking speed. Whether you're looking to challenge yourself or compete with friends, this simple yet addictive game delivers a burst of fun in every session.
+ClickFast is a fast-paced web game designed to test your **reaction time**. Click as fast as you can once the screen turns green — your response time will be measured in milliseconds!
 
 ## 🚀 Features
 
-- ⚡ Ultra-fast gameplay focused on reaction time
-- 🎯 Score tracking and live timer
-- 💻 Built using HTML, CSS, and JavaScript
+- ⚡ Test your reflexes with every click
+- ⏱️ Displays your exact reaction time (in ms)
+- 💻 Built using Django + HTML + JavaScript
+- 🌐 Deployed live via Render
 - 📱 Responsive design — play on desktop or mobile
-- 🧠 Easy to pick up, hard to master
 
 ## 🎮 Play Now
 
- [ClickFast on Render](https://clickfast.onrender.com)
+👉 [ClickFast on Render](https://clickfast.onrender.com)
 
 ## 🛠️ Tech Stack
 
-- HTML5
-- CSS3
-- JavaScript (Vanilla or any framework you used)
+- Python (Django)
+- HTML5 + CSS3
+- JavaScript (Vanilla)
+- Render (cloud deployment)
 
 ## 📦 Installation
 
 ```bash
-git clone https://github.com/your-username/ClickFast.git
+git clone https://github.com/Kaimin018/ClickFast.git
 cd ClickFast
-open index.html  # or use Live Server extension in VS Code
+pip install -r requirements.txt
+python manage.py runserver
