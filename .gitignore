@@ -1,0 +1,8 @@
+# 忽略虛擬環境
+.venv/
+
+# 忽略資料庫
+db.sqlite3
+
+# VSCode 設定（可選）
+.vscode/
