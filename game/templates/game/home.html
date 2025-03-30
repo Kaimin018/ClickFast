@@ -12,46 +12,112 @@
       line-height: 300px;
       font-size: 24px;
       color: white;
+      cursor: pointer;
+    }
+    #reaction {
+      text-align: center;
+      font-size: 24px;
+      margin-top: 20px;
+      color: black;
+    }
+    #recordList {
+      text-align: center;
+      margin-top: 20px;
+    }
+    table {
+      margin: 0 auto;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #f2f2f2;
     }
   </style>
 </head>
 <body>
-  <div id="gameBox">等待中...</div>
-  <p style="text-align:center;"><span id="score"></span></p>
+  <h1 style="text-align:center;">反應力遊戲</h1>
+  <div id="gameBox">準備遊戲中...</div>
+  <div id="reaction">這裡會顯示反應時間</div>
+  <div id="recordList">
+    <h2>最近10次紀錄</h2>
+    <div id="records"></div>
+  </div>
 
   <script>
     const box = document.getElementById('gameBox');
-    const scoreEl = document.getElementById('score');  // 我們會用它顯示反應時間
+    const reaction = document.getElementById('reaction');
+    const recordsElement = document.getElementById('records');
     let ready = false;
     let startTime = 0;
+    let records = []; // 儲存反應時間的陣列
+
+    // 更新並重繪表格，預設總共有 10 格，空格以 "-" 表示
+    function updateRecordsTable() {
+      let html = `<table>`;
+      html += `<tr><th>次數</th><th>反應時間 (毫秒)</th></tr>`;
+      for (let i = 0; i < 10; i++) {
+        let value = records[i] !== undefined ? records[i] : "-";
+        html += `<tr><td>${i + 1}</td><td>${value}</td></tr>`;
+      }
+      // 只計算有效的反應時間來求平均
+      const validRecords = records.filter(r => typeof r === "number");
+      const sum = validRecords.reduce((acc, cur) => acc + cur, 0);
+      const avg = validRecords.length > 0 ? (sum / validRecords.length).toFixed(2) : "-";
+      html += `<tr><td>平均</td><td>${avg}</td></tr>`;
+      html += `</table>`;
+      recordsElement.innerHTML = html;
+    }
 
     function startGame() {
-      box.innerText = "準備...";
+      box.innerText = "請等待綠燈...";
       box.style.backgroundColor = "red";
       ready = false;
-      scoreEl.innerText = "";
+      reaction.innerText = "等待中...";
       
+      const waitTime = Math.random() * 2000 + 1000; // 隨機 1~3 秒
 
       setTimeout(() => {
         box.style.backgroundColor = "green";
-        box.innerText = "GO！";
+        box.innerText = "點我！";
         ready = true;
-        startTime = Date.now(); 
-      }, Math.random() * 4000 + 2000); // 隨機時間
+        startTime = Date.now();
+      }, waitTime);
     }
 
     box.onclick = () => {
       if (ready) {
         const reactionTime = Date.now() - startTime;
-        scoreEl.innerText = `你的反應時間：${reactionTime} 毫秒`;
-        startGame();  // 重新開始下一輪
+        reaction.innerText = `你的反應時間：${reactionTime} 毫秒`;
+        records.push(reactionTime);
+        // 保留最近10筆紀錄
+        if (records.length > 10) {
+          records.shift();
+        }
+        updateRecordsTable();
+        ready = false;
+        box.innerText = "再試一次...";
+        box.style.backgroundColor = "red";
+
+        setTimeout(() => {
+          startGame();
+        }, 1500);
       } else {
-        alert("太早了！");
-        scoreEl.innerText = "請等綠燈再點！";
-        startGame();
+        reaction.innerText = "太快啦！請等綠燈～";
+        box.innerText = "太快了！";
+        box.style.backgroundColor = "red";
+
+        setTimeout(() => {
+          startGame();
+        }, 2000);
       }
     };
 
+    // 一開始就初始化表格，先顯示10格
+    updateRecordsTable();
     startGame();
   </script>
 </body>
