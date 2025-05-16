@@ -3,122 +3,263 @@
 <head>
   <title>反應力遊戲</title>
   <style>
+    body {
+      font-family: sans-serif;
+      display: flex; /* For centering content */
+      flex-direction: column; /* Stack items vertically */
+      align-items: center; /* Center items horizontally */
+      min-height: 100vh;
+      margin: 0;
+      padding-top: 20px; /* Add some space at the top */
+      box-sizing: border-box;
+    }
+    #gameContainer { /* Added a container for game elements */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    #startButton {
+        padding: 10px 20px;
+        font-size: 18px;
+        cursor: pointer;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        margin-bottom: 20px; /* Space below start button */
+        transition: background-color 0.2s;
+    }
+    #startButton:hover {
+        background-color: #0056b3;
+    }
+    #startButton:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+    }
     #gameBox {
       width: 300px;
       height: 300px;
-      background-color: red;
-      margin: 50px auto;
+      margin: 0 auto 20px auto; /* Adjusted margin */
       text-align: center;
       line-height: 300px;
       font-size: 24px;
       color: white;
-      cursor: pointer;
+      cursor: default; /* Default cursor when idle */
+      border-radius: 10px;
+      transition: background-color 0.2s ease-in-out;
+    }
+    .box-active-cursor { /* Class to add pointer cursor when game is active */
+        cursor: pointer;
     }
     #reaction {
       text-align: center;
-      font-size: 24px;
-      margin-top: 20px;
+      font-size: 20px;
+      margin-top: 0; /* Removed top margin as it's handled by container */
       color: black;
+      min-height: 24px;
     }
     #recordList {
       text-align: center;
       margin-top: 20px;
     }
     table {
-      margin: 0 auto;
+      margin: 20px auto;
       border-collapse: collapse;
+      width: 80%;
+      max-width: 400px;
     }
     th, td {
       border: 1px solid #ddd;
-      padding: 8px;
+      padding: 10px;
       text-align: center;
     }
     th {
       background-color: #f2f2f2;
     }
+    h1, h2 {
+        color: #333;
+        margin-top: 0; /* Adjust heading margins */
+        margin-bottom: 20px;
+    }
   </style>
 </head>
 <body>
-  <h1 style="text-align:center;">反應力遊戲</h1>
-  <div id="gameBox">準備遊戲中...</div>
-  <div id="reaction">這裡會顯示反應時間</div>
+  <h1>反應力遊戲</h1>
+  <div id="gameContainer">
+    <button id="startButton">開始遊戲</button>
+    <div id="gameBox">準備開始...</div>
+    <div id="reaction">這裡會顯示反應時間</div>
+  </div>
   <div id="recordList">
-    <h2>最近10次紀錄</h2>
-    <div id="records"></div>
+    <h2>最近<span id="maxRecordsDisplay">10</span>次紀錄</h2>
+    <div id="recordsTableContainer"></div>
   </div>
 
   <script>
-    const box = document.getElementById('gameBox');
-    const reaction = document.getElementById('reaction');
-    const recordsElement = document.getElementById('records');
-    let ready = false;
-    let startTime = 0;
-    let records = []; // 儲存反應時間的陣列
+    document.addEventListener('DOMContentLoaded', () => {
+      const GAME_STATE = {
+        IDLE: 'idle',
+        WAITING: 'waiting',
+        READY: 'ready',
+        EARLY_CLICK: 'early',
+        SHOW_RESULT: 'result'
+      };
 
-    // 更新並重繪表格，預設總共有 10 格，空格以 "-" 表示
-    function updateRecordsTable() {
-      let html = `<table>`;
-      html += `<tr><th>次數</th><th>反應時間 (毫秒)</th></tr>`;
-      for (let i = 0; i < 10; i++) {
-        let value = records[i] !== undefined ? records[i] : "-";
-        html += `<tr><td>${i + 1}</td><td>${value}</td></tr>`;
-      }
-      // 只計算有效的反應時間來求平均
-      const validRecords = records.filter(r => typeof r === "number");
-      const sum = validRecords.reduce((acc, cur) => acc + cur, 0);
-      const avg = validRecords.length > 0 ? (sum / validRecords.length).toFixed(2) : "-";
-      html += `<tr><td>平均</td><td>${avg}</td></tr>`;
-      html += `</table>`;
-      recordsElement.innerHTML = html;
-    }
+      const UI_TEXTS = {
+        BOX_IDLE: "準備開始...",
+        BOX_WAITING: "請等待綠燈...",
+        BOX_READY: "點我！",
+        BOX_EARLY_CLICK: "太快了！",
+        BOX_SHOW_RESULT: "點擊再玩一次",
+        REACTION_IDLE: "點擊上方按鈕開始遊戲",
+        REACTION_WAITING: "等待中...",
+        REACTION_READY: "",
+        REACTION_EARLY_CLICK: "太快啦！請等綠燈～",
+        REACTION_SHOW_RESULT_PREFIX: "你的反應時間："
+      };
 
-    function startGame() {
-      box.innerText = "請等待綠燈...";
-      box.style.backgroundColor = "red";
-      ready = false;
-      reaction.innerText = "等待中...";
-      
-      const waitTime = Math.random() * 2000 + 1000; // 隨機 1~3 秒
+      const COLORS = {
+        IDLE: '#adb5bd',    // Light Grey for inactive box
+        WAITING: '#dc3545',
+        READY: '#28a745',
+        EARLY_CLICK: '#ffc107',
+        SHOW_RESULT: '#6c757d'
+      };
 
-      setTimeout(() => {
-        box.style.backgroundColor = "green";
-        box.innerText = "點我！";
-        ready = true;
-        startTime = Date.now();
-      }, waitTime);
-    }
+      const MAX_RECORDS = 10;
+      const MIN_WAIT_TIME_MS = 1000;
+      const RANDOM_WAIT_ADDITION_MS = 2000;
+      const EARLY_CLICK_PENALTY_DELAY_MS = 2000;
 
-    box.onclick = () => {
-      if (ready) {
-        const reactionTime = Date.now() - startTime;
-        reaction.innerText = `你的反應時間：${reactionTime} 毫秒`;
-        records.push(reactionTime);
-        // 保留最近10筆紀錄
-        if (records.length > 10) {
-          records.shift();
+      const startButton = document.getElementById('startButton');
+      const gameBox = document.getElementById('gameBox');
+      const reactionDisplay = document.getElementById('reaction');
+      const recordsTableContainer = document.getElementById('recordsTableContainer');
+      document.getElementById('maxRecordsDisplay').textContent = MAX_RECORDS;
+
+      let currentState = GAME_STATE.IDLE;
+      let startTime = 0;
+      let records = [];
+      let waitTimeoutId = null;
+
+      function updateRecordsTable() {
+        let tableHtml = `<table>
+                           <tr><th>次數</th><th>反應時間 (毫秒)</th></tr>`;
+        for (let i = 0; i < MAX_RECORDS; i++) {
+          const value = records[i] !== undefined ? records[i] : "-";
+          tableHtml += `<tr><td>${i + 1}</td><td>${value}</td></tr>`;
         }
-        updateRecordsTable();
-        ready = false;
-        box.innerText = "再試一次...";
-        box.style.backgroundColor = "red";
-
-        setTimeout(() => {
-          startGame();
-        }, 1500);
-      } else {
-        reaction.innerText = "太快啦！請等綠燈～";
-        box.innerText = "太快了！";
-        box.style.backgroundColor = "red";
-
-        setTimeout(() => {
-          startGame();
-        }, 2000);
+        const validRecords = records.filter(r => typeof r === "number");
+        const sum = validRecords.reduce((acc, cur) => acc + cur, 0);
+        const avg = validRecords.length > 0 ? (sum / validRecords.length).toFixed(2) : "-";
+        tableHtml += `<tr><td>平均</td><td>${avg}</td></tr></table>`;
+        recordsTableContainer.innerHTML = tableHtml;
       }
-    };
 
-    // 一開始就初始化表格，先顯示10格
-    updateRecordsTable();
-    startGame();
+      function updateUI(newReactionTime = null) {
+        switch (currentState) {
+          case GAME_STATE.IDLE:
+            gameBox.innerText = UI_TEXTS.BOX_IDLE;
+            gameBox.style.backgroundColor = COLORS.IDLE;
+            gameBox.classList.remove('box-active-cursor');
+            reactionDisplay.innerText = UI_TEXTS.REACTION_IDLE;
+            startButton.disabled = false;
+            startButton.style.display = 'block'; // Or 'inline-block'
+            break;
+          case GAME_STATE.WAITING:
+            gameBox.innerText = UI_TEXTS.BOX_WAITING;
+            gameBox.style.backgroundColor = COLORS.WAITING;
+            gameBox.classList.add('box-active-cursor');
+            reactionDisplay.innerText = UI_TEXTS.REACTION_WAITING;
+            startButton.disabled = true;
+            startButton.style.display = 'none';
+            break;
+          case GAME_STATE.READY:
+            gameBox.innerText = UI_TEXTS.BOX_READY;
+            gameBox.style.backgroundColor = COLORS.READY;
+            gameBox.classList.add('box-active-cursor');
+            reactionDisplay.innerText = UI_TEXTS.REACTION_READY;
+            startButton.disabled = true;
+            startButton.style.display = 'none';
+            break;
+          case GAME_STATE.EARLY_CLICK:
+            gameBox.innerText = UI_TEXTS.BOX_EARLY_CLICK;
+            gameBox.style.backgroundColor = COLORS.EARLY_CLICK;
+            gameBox.classList.add('box-active-cursor'); // Still clickable to acknowledge
+            reactionDisplay.innerText = UI_TEXTS.REACTION_EARLY_CLICK;
+            startButton.disabled = true; // Keep disabled until next proper start
+            startButton.style.display = 'none';
+            break;
+          case GAME_STATE.SHOW_RESULT:
+            gameBox.innerText = UI_TEXTS.BOX_SHOW_RESULT;
+            gameBox.style.backgroundColor = COLORS.SHOW_RESULT;
+            gameBox.classList.add('box-active-cursor');
+            if (newReactionTime !== null) {
+                 reactionDisplay.innerText = `${UI_TEXTS.REACTION_SHOW_RESULT_PREFIX}${newReactionTime} 毫秒`;
+            }
+            // startButton.disabled = false; // Or keep it for "play again" via box
+            // startButton.style.display = 'block';
+            startButton.disabled = true; // Let box click handle restart
+            startButton.style.display = 'none';
+            break;
+        }
+      }
+
+      function scheduleGame() { // Renamed from startGame to avoid confusion with button action
+        if (waitTimeoutId) clearTimeout(waitTimeoutId);
+
+        currentState = GAME_STATE.WAITING;
+        updateUI();
+
+        const waitTime = MIN_WAIT_TIME_MS + Math.random() * RANDOM_WAIT_ADDITION_MS;
+
+        waitTimeoutId = setTimeout(() => {
+          if (currentState === GAME_STATE.WAITING) {
+            currentState = GAME_STATE.READY;
+            updateUI();
+            startTime = Date.now();
+          }
+        }, waitTime);
+      }
+
+      startButton.onclick = () => {
+        if (currentState === GAME_STATE.IDLE || currentState === GAME_STATE.SHOW_RESULT) {
+            scheduleGame();
+        }
+      };
+
+      gameBox.onclick = () => {
+        if (currentState === GAME_STATE.IDLE) return; // Do nothing if game hasn't been started via button
+
+        if (waitTimeoutId) clearTimeout(waitTimeoutId);
+
+        switch (currentState) {
+          // IDLE case is handled by the check above
+          case GAME_STATE.SHOW_RESULT: // Click gameBox to play again
+            scheduleGame();
+            break;
+          case GAME_STATE.WAITING:
+            currentState = GAME_STATE.EARLY_CLICK;
+            updateUI();
+            waitTimeoutId = setTimeout(scheduleGame, EARLY_CLICK_PENALTY_DELAY_MS);
+            break;
+          case GAME_STATE.READY:
+            const reactionTime = Date.now() - startTime;
+            records.unshift(reactionTime);
+            if (records.length > MAX_RECORDS) {
+              records.pop();
+            }
+            updateRecordsTable();
+            currentState = GAME_STATE.SHOW_RESULT;
+            updateUI(reactionTime);
+            // No automatic restart, wait for click on gameBox or startButton
+            break;
+        }
+      };
+
+      updateRecordsTable();
+      updateUI(); // Set initial UI based on IDLE state
+    });
   </script>
 </body>
 </html>

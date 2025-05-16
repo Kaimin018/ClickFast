@@ -38,7 +38,8 @@ pip freeze > requirement.txt
 
 # VM Startup Script
 
-env\Scripts\activate
+python -m venv myenv
+myenv\Scripts\activate
 
 pip install -r requirements.txt
 

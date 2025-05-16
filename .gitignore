@@ -6,3 +6,7 @@ db.sqlite3
 
 # VSCode 設定（可選）
 .vscode/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
