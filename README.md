@@ -28,7 +28,7 @@ git clone https://github.com/Kaimin018/ClickFast.git
 cd ClickFast
 pip install -r requirements.txt
 python manage.py runserver
-```bash
+```
 
 ## 🛠️ How to prevent website shutdown?
 
