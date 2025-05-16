@@ -33,6 +33,9 @@ mygame_project/                 ← Django 專案資料夾
 1 小時	    部署到 render.com 或 vercel（免費）
 剩下時間	測試＋優化或加動畫／音效
 
+# create requirement
+pip freeze > requirement.txt
+
 # VM Startup Script
 
 env\Scripts\activate
