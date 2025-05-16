@@ -29,6 +29,8 @@ DEBUG = True
 
 if os.getenv('RENDER'):
     ALLOWED_HOSTS = ['clickfast.onrender.com']
+elif os.getenv('VERCEL'):
+    ALLOWED_HOSTS = ['.vercel.app']
 else:
     ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
