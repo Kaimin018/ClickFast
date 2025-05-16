@@ -45,3 +45,7 @@ pip install -r requirements.txt
 python manage.py runserver
 
 open http://127.0.0.1:8000
+
+# Vercel seetting 
+
+[Deploy a Django web app to Vercel](https://www.youtube.com/watch?v=ZjVzHcXCeMU)
