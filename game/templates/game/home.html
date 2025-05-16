@@ -15,6 +15,16 @@
       background-color: #f4f7f6;
     }
 
+    table th:nth-child(1),
+    table td:nth-child(1) {
+      min-width: 60px; 
+    }
+    
+    table th:nth-child(2),
+    table td:nth-child(2) {
+      min-width: 120px;
+    }
+
     h1 {
         color: #333;
         text-align: center;
@@ -211,12 +221,10 @@
         controlButton.textContent = gameHasStartedOnce ? UI_TEXTS.BUTTON_RESTART : UI_TEXTS.BUTTON_START;
 
 
-        if (currentState === GAME_STATE.WAITING) {
-            scheduledWaitDisplay.textContent = `變綠等待: ${(currentScheduledWaitTime / 1000).toFixed(2)} 秒`;
+        if (currentState === GAME_STATE.SHOW_RESULT) {
+            scheduledWaitDisplay.textContent = `本次變綠等待時間: ${(currentScheduledWaitTime / 1000).toFixed(2)} 秒`;
             scheduledWaitDisplay.style.display = 'block';
         } else if (currentState === GAME_STATE.READY) {
-            scheduledWaitDisplay.textContent = '已變綠!';
-            scheduledWaitDisplay.style.display = 'block';
             controlButton.disabled = true; // Disable restart button when box is green
             gameBox.style.cursor = 'pointer'; // Make gameBox clickable
         }
