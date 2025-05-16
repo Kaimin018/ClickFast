@@ -28,3 +28,8 @@ git clone https://github.com/Kaimin018/ClickFast.git
 cd ClickFast
 pip install -r requirements.txt
 python manage.py runserver
+
+
+## 🛠️ How to prevent website shutdown?
+
+Use [uptimerobot](https://uptimerobot.com/) to periodically ping to the target website.
