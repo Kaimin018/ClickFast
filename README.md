@@ -32,4 +32,4 @@ python manage.py runserver
 
 ## 🛠️ How to prevent website shutdown?
 
-Use [uptimerobot](https://uptimerobot.com/) to periodically ping to the target website.
+Use [uptimerobot](https://uptimerobot.com/) periodically ping the target website.
