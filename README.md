@@ -13,6 +13,7 @@ ClickFast is a fast-paced web game designed to test your **reaction time**. Clic
 ## 🎮 Play Now
 
 👉 [ClickFast on Render](https://clickfast.onrender.com)
+👉 [ClickFast on Vercel](https://click-fast.vercel.app/)
 
 ## 🛠️ Tech Stack
 
