@@ -4,14 +4,14 @@ ClickFast is a fast-paced web game designed to test your **reaction time**. Clic
 
 ## 📚 Table of Contents
 
-- [Features](#-features)
-- [Play Now](#-play-now)
-- [Tech Stack](#-tech-stack)
-- [Installation](#-installation)
-- [Screenshots](#-screenshots)
-- [Contributing](#-contributing)
-- [License](#-license)
-- [How to Prevent Website Shutdown?](#-how-to-prevent-website-shutdown)
+- [Features](#features)
+- [Play Now](#play-now)
+- [Tech Stack](#tech-stack)
+- [Installation](#installation)
+- [Screenshots](#screenshots)
+- [Contributing](#contributing)
+- [License](#license)
+- [How to Prevent Website Shutdown?](#how-to-prevent-website-shutdown)
 
 ## 🚀 Features
 
