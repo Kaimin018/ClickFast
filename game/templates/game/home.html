@@ -175,6 +175,14 @@
       th, td {
         padding: 6px;
       }
+      #gameBox.center-mobile-message {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-size: 18px;
+        padding: 0 10px;
+      }
     }
 
   </style>
@@ -213,7 +221,8 @@
         BOX_WAITING: "請等待綠燈...",
         BOX_READY: "點我！",
         BOX_EARLY_CLICK: "太快了！",
-        BOX_SHOW_RESULT: "查看右方紀錄", // Or "點擊按鈕再玩一次"
+        BOX_SHOW_RESULT_DESKTOP: "查看右方紀錄",
+        BOX_SHOW_RESULT_MOBILE: "查看下方紀錄",
         REACTION_IDLE: "點擊「開始遊戲」按鈕",
         REACTION_WAITING: "等待中...",
         REACTION_READY: "",
@@ -247,6 +256,10 @@
       let currentScheduledWaitTime = 0;
       let gameHasStartedOnce = false; // Flag to track if the game has started at least once
 
+      function isMobile() {
+        return window.matchMedia("(max-width: 600px)").matches;
+      }
+      
       function updateRecordsTable() {
         let tableHtml = `<table>
                            <tr><th>次數</th><th>反應時間 (毫秒)</th></tr>`;
@@ -300,10 +313,16 @@
             reactionDisplay.innerText = UI_TEXTS.REACTION_EARLY_CLICK;
             break;
           case GAME_STATE.SHOW_RESULT:
-            gameBox.innerText = UI_TEXTS.BOX_SHOW_RESULT;
+            if (isMobile()) {
+              gameBox.classList.add('center-mobile-message');
+              gameBox.innerText = UI_TEXTS.BOX_SHOW_RESULT_MOBILE;
+            } else {
+              gameBox.classList.remove('center-mobile-message');
+              gameBox.innerText = UI_TEXTS.BOX_SHOW_RESULT_DESKTOP;
+            }
             gameBox.style.backgroundColor = COLORS.SHOW_RESULT;
             if (newReactionTime !== null) {
-                 reactionDisplay.innerText = `${UI_TEXTS.REACTION_SHOW_RESULT_PREFIX}${newReactionTime} 毫秒`;
+              reactionDisplay.innerText = `${UI_TEXTS.REACTION_SHOW_RESULT_PREFIX}${newReactionTime} 毫秒`;
             }
             break;
         }
@@ -361,6 +380,12 @@
         // In other states (IDLE, EARLY_CLICK, SHOW_RESULT), gameBox click does nothing by default
         // as control is with the controlButton.
       };
+
+      window.addEventListener('resize', () => {
+        if (currentState === GAME_STATE.SHOW_RESULT) {
+          updateUI();
+        }
+      });
 
       // Initial setup
       updateRecordsTable();
