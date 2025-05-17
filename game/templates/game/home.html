@@ -2,7 +2,9 @@
 <html>
 <head>
   <title>反應力遊戲</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    /* 電腦版樣式 */
     body {
       font-family: sans-serif;
       display: flex;
@@ -130,6 +132,51 @@
         display: none;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+
+    /* 手機版樣式 */
+    @media (max-width: 600px) {
+      body {
+        padding: 5px;
+      }
+      #appContainer {
+        flex-direction: column;
+        gap: 10px;
+        max-width: 100vw;
+      }
+      #gamePanel, #recordPanel {
+        width: 100%;
+        max-width: 100vw;
+        padding: 10px;
+        box-sizing: border-box;
+        margin: 0;
+      }
+      #gameBox {
+        width: 90vw;
+        max-width: 320px;
+        height: 90vw;
+        max-height: 320px;
+        font-size: 18px;
+        line-height: normal;
+        margin: 0 auto 10px auto;
+      }
+      #controlButton {
+        width: 100%;
+        min-width: unset;
+        font-size: 20px;
+        padding: 14px 0;
+      }
+      #reaction {
+        font-size: 16px;
+      }
+      table {
+        font-size: 13px;
+        max-width: 100vw;
+      }
+      th, td {
+        padding: 6px;
+      }
+    }
+
   </style>
 </head>
 <body>
