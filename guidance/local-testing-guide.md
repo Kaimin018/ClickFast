@@ -80,6 +80,26 @@ python manage.py createsuperuser
 
 然後按照提示輸入使用者名稱、電子郵件和密碼。
 
+## 建立超級測試帳號（可選）
+
+用於測試成就系統和商店物品功能：
+
+```powershell
+python manage.py create_super_account
+```
+
+或者指定使用者名稱和金幣數量：
+
+```powershell
+python manage.py create_super_account --username test_user --coins 2000000
+```
+
+超級帳號將自動：
+- 擁有大量金幣（預設 1,000,000）
+- 購買所有商店物品到最高等級
+- 解鎖所有成就（獎勵已自動領取）
+- 擁有高額的遊戲統計數據（總點擊50000、單局最佳500、遊戲局數200、對戰勝場50）
+
 ## 測試步驟
 
 1. **開啟遊戲主頁**: 存取 http://127.0.0.1:8000/
@@ -155,7 +175,10 @@ python manage.py migrate
 $env:PYTHONIOENCODING="utf-8"
 python manage.py init_game_data
 
-# 7. 啟動伺服器
+# 7. （可選）建立超級測試帳號
+python manage.py create_super_account
+
+# 8. 啟動伺服器
 python manage.py runserver
 ```
 

@@ -26,7 +26,8 @@ game/
 │   ├── __init__.py
 │   └── commands/
 │       ├── __init__.py
-│       └── init_game_data.py  # 初始化遊戲資料命令
+│       ├── init_game_data.py  # 初始化遊戲資料命令
+│       └── create_super_account.py  # 創建超級測試帳號命令
 └── Test_Cases/              # 測試用例目錄
     ├── __init__.py
     └── test_case_01_game_flow.py  # 遊戲流程測試用例
@@ -45,22 +46,26 @@ game/
 - **views.py**: API 視圖函數
   - `home()`: 渲染遊戲主頁
   - `api_login_or_register()`: 登錄/註冊 API
-  - `api_get_profile()`: 獲取玩家資料 API
-  - `api_submit_game()`: 提交遊戲結果 API
+  - `api_logout()`: 登出 API
+  - `api_get_profile()`: 獲取玩家資料 API（包含購買記錄、成就、徽章）
+  - `api_submit_game()`: 提交遊戲結果 API（自動檢查並解鎖成就）
   - `api_get_shop()`: 獲取商店物品 API
   - `api_purchase_item()`: 購買物品 API
   - `api_get_achievements()`: 獲取成就列表 API
   - `api_get_game_history()`: 獲取遊戲歷史 API
+  - `api_update_badges()`: 更新用戶選擇的成就徽章 API
 
 - **urls.py**: URL 路由配置
   - `/`: 遊戲主頁
   - `/api/login/`: 登錄/註冊
+  - `/api/logout/`: 登出
   - `/api/profile/`: 獲取玩家資料
   - `/api/submit-game/`: 提交遊戲結果
   - `/api/shop/`: 商店相關
   - `/api/purchase/`: 購買物品
   - `/api/achievements/`: 成就相關
   - `/api/history/`: 歷史記錄
+  - `/api/update-badges/`: 更新成就徽章
 
 - **templates/game/home.html**: 遊戲前端頁面
   - 包含完整的 HTML、CSS 和 JavaScript
@@ -120,6 +125,10 @@ assets/
 - `total_clicks`: 總點擊次數
 - `best_clicks_per_round`: 單局最佳點擊數
 - `total_games_played`: 總遊戲局數
+- `battle_wins`: 對戰勝場數（預留功能）
+- `badge_1_id`: 用戶選擇的第一個成就徽章 ID
+- `badge_2_id`: 用戶選擇的第二個成就徽章 ID
+- `badge_3_id`: 用戶選擇的第三個成就徽章 ID
 
 ### GameSession（遊戲記錄）
 - `user`: 玩家
@@ -134,7 +143,20 @@ assets/
 - `description`: 描述
 - `base_price`: 基礎價格
 - `effect_value`: 效果值
+  - 時間延長：每次升級增加的秒數（預設 2 秒）
+  - 額外按鈕：每次升級增加的按鈕數量（預設 1 個）
+  - 自動點擊器：此值不再使用，頻率由等級直接計算
 - `max_level`: 最大等級
+
+**商店物品詳細說明：**
+- **遊戲時間延長**：每次升級增加 2 秒遊戲時間（最高 10 級），延長時間內點擊獲得的金幣為基礎時間的兩倍
+- **額外點擊按鈕**：每次升級增加 1 個點擊按鈕（最高 5 級）
+- **自動點擊器**：自動點擊功能，頻率計算規則：
+  - Lv.1：每 3 秒點擊 1 次
+  - Lv.2：每 2 秒點擊 1 次
+  - Lv.3：每 1 秒點擊 1 次
+  - Lv.4+：每秒點擊 (等級-2) 次
+  - 自動點擊器會作用於所有額外按鈕，總點擊頻率 = 單個點擊器頻率 × 額外按鈕數量
 
 ### PlayerPurchase（購買記錄）
 - `user`: 玩家
@@ -154,26 +176,33 @@ assets/
 - `user`: 玩家
 - `achievement`: 成就
 - `unlocked_at`: 解鎖時間
-- `reward_claimed`: 獎勵是否已領取
+- `reward_claimed`: 獎勵是否已領取（成就解鎖時自動領取獎勵）
+
+**成就系統說明：**
+- 成就分為三種類型：總點擊數（total_clicks）、單局點擊數（single_round）、總遊戲局數（total_games）
+- 成就解鎖時會自動發放獎勵金幣，無需手動領取
+- 玩家可以選擇最多 3 個已解鎖的成就作為徽章顯示在右上角
 
 ## API 端點
 
 ### 認證相關
-- `POST /api/login/`: 登錄或註冊用戶
+- `POST /api/login/`: 登錄或註冊用戶（首次輸入用戶名會自動創建帳號）
+- `POST /api/logout/`: 登出用戶
 
 ### 玩家資料
-- `GET /api/profile/`: 獲取玩家資料、購買記錄、成就
+- `GET /api/profile/`: 獲取玩家資料、購買記錄、成就、徽章
 
 ### 遊戲相關
-- `POST /api/submit-game/`: 提交遊戲結果
-- `GET /api/history/`: 獲取遊戲歷史記錄
+- `POST /api/submit-game/`: 提交遊戲結果（自動計算金幣、更新統計、檢查成就）
+- `GET /api/history/`: 獲取遊戲歷史記錄（可選 limit 參數限制返回數量）
 
 ### 商店相關
-- `GET /api/shop/`: 獲取商店物品列表
-- `POST /api/purchase/`: 購買商店物品
+- `GET /api/shop/`: 獲取商店物品列表（包含當前等級和下一級價格）
+- `POST /api/purchase/`: 購買商店物品（價格計算：base_price × (current_level + 1)）
 
 ### 成就相關
-- `GET /api/achievements/`: 獲取成就列表
+- `GET /api/achievements/`: 獲取成就列表（包含解鎖狀態）
+- `POST /api/update-badges/`: 更新用戶選擇的成就徽章（最多 3 個）
 
 ## 測試結構
 
@@ -201,6 +230,8 @@ assets/
 
 ### 管理命令
 - `python manage.py init_game_data`: 初始化遊戲資料（商店物品和成就）
+- `python manage.py create_super_account`: 創建超級測試帳號（用於測試成就系統和商店物品功能）
+  - 可選參數：`--username`（預設：super_test）、`--coins`（預設：1000000）
 
 ### 測試命令
 - `python manage.py test game.Test_Cases.test_case_01_game_flow`: 運行遊戲流程測試
