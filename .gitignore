@@ -3,9 +3,16 @@
 
 # 忽略資料庫
 db.sqlite3
+db.sqlite3-journal
+*.sqlite
+*.sqlite3
+*.db
 
 # VSCode 設定（可選）
 .vscode/
+
+# Cursor 設定
+.cursor/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
