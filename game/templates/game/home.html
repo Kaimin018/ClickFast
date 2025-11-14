@@ -1,400 +1,2125 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>反應力遊戲</title>
+  <title>ClickFast</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self';">
-  <!-- Google AdSense 廣告腳本 -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4564506742193898"
-     crossorigin="anonymous"></script>
   <style>
-    /* 電腦版樣式 */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
-      font-family: sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .user-info {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    /* 成就徽章容器樣式（標題視窗） */
+    .badges-container {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* 成就徽章容器樣式（遊戲主視窗右上角） */
+    .badges-container-game {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .badge-slot {
+      width: 50px;
+      height: 50px;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f9f9f9;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .badge-slot:hover {
+      border-color: #667eea;
+      background: #f0f4ff;
+      transform: scale(1.05);
+    }
+
+    .badge-slot.has-badge {
+      border: 2px solid #667eea;
+      background: linear-gradient(135deg, #f0f4ff 0%, #e8edff 100%);
+    }
+
+    .badge-icon {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .badge-slot:not(.has-badge) .badge-icon {
+      color: #999;
+      font-size: 20px;
+    }
+
+    .username-display {
+      font-size: 18px;
+      font-weight: bold;
+      color: #667eea;
+      padding: 8px 16px;
+      background: #f0f4ff;
+      border-radius: 8px;
+      border: 2px solid #667eea;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .username-display:hover {
+      background: #667eea;
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .settings-container {
+      position: relative;
+      margin-left: 10px;
+    }
+
+    .settings-btn {
+      font-size: 14px;
+      font-weight: bold;
+      color: #667eea;
+      padding: 6px 12px;
+      background: #fff;
+      border-radius: 6px;
+      border: 2px solid #667eea;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .settings-btn:hover {
+      background: #667eea;
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .settings-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 5px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      min-width: 150px;
+      z-index: 1000;
+      overflow: hidden;
+    }
+
+    .settings-dropdown.active {
+      display: block;
+    }
+
+    .settings-dropdown-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: background 0.2s;
+      border-bottom: 1px solid #f0f0f0;
+      color: #333;
+      font-size: 14px;
+    }
+
+    .settings-dropdown-item:last-child {
+      border-bottom: none;
+    }
+
+    .settings-dropdown-item:hover {
+      background: #f5f5f5;
+    }
+
+    .settings-dropdown-item.logout {
+      color: #dc3545;
+    }
+
+    .settings-dropdown-item.logout:hover {
+      background: #fee;
+      color: #c82333;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+    }
+
+    .stat-item strong {
+      color: #667eea;
+    }
+
+    .coins {
+      font-size: 24px;
+      font-weight: bold;
+      color: #f59e0b;
+    }
+
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .panel {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .panel h2 {
+      margin-bottom: 15px;
+      color: #667eea;
+      font-size: 20px;
+    }
+
+    .game-area {
+      grid-column: 1 / -1;
+    }
+
+    .login-panel {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .login-panel input {
+      padding: 12px;
+      font-size: 16px;
+      border: 2px solid #667eea;
+      border-radius: 5px;
+      margin-right: 10px;
+      width: 200px;
+    }
+
+    .login-panel button {
+      padding: 12px 24px;
+      font-size: 16px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .login-panel button:hover {
+      background: #5568d3;
+    }
+
+    .game-container {
+      position: relative;
+      text-align: center;
+      min-height: 400px;
+    }
+
+    .timer {
+      font-size: 32px;
+      font-weight: normal;
+      color: #999999;
+      margin: 15px 0;
+    }
+
+    .click-buttons-container {
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-      box-sizing: border-box;
-      background-color: #f4f7f6;
+      gap: 20px;
+      margin: 20px 0;
     }
 
-    table th:nth-child(1),
-    table td:nth-child(1) {
-      min-width: 60px; 
-    }
-    
-    table th:nth-child(2),
-    table td:nth-child(2) {
-      min-width: 120px;
+    /* 主按鈕容器 */
+    .main-button-wrapper {
+      display: flex;
+      justify-content: center;
+      width: 100%;
     }
 
-    h1 {
-        color: #333;
-        text-align: center;
-        margin-bottom: 30px;
-        width: 100%;
+    /* 自動點擊按鈕容器 */
+    .auto-click-buttons-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      width: 100%;
     }
 
-    #appContainer {
-        display: flex;
-        width: 100%;
-        max-width: 1000px;
-        gap: 30px;
-    }
-
-    #gamePanel, #recordPanel {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
-    #controlButton { /* Renamed from startButton for clarity */
-        padding: 12px 25px;
-        font-size: 18px;
-        cursor: pointer;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        margin-bottom: 25px;
-        transition: background-color 0.2s, color 0.2s; /* Added color transition */
-        min-width: 150px; /* Ensure button has a decent width */
-        text-align: center;
-    }
-    #controlButton:hover {
-        background-color: #0056b3;
-    }
-    #controlButton:disabled {
-        background-color: #cccccc;
-        color: #666666;
-        cursor: not-allowed;
-    }
-
-    #gameBox {
-      width: 280px;
-      height: 280px;
-      margin: 0 auto 20px auto;
-      text-align: center;
-      line-height: 280px;
-      font-size: 22px;
-      color: white;
-      cursor: default;
-      border-radius: 10px;
-      transition: background-color 0.2s ease-in-out;
-    }
-    /* .box-active-cursor class will be added by JS when gameBox is interactive */
-
-    #reaction {
-      text-align: center;
-      font-size: 18px;
-      margin-top: 0;
-      color: #333;
-      min-height: 22px;
+    .click-button {
+      padding: 30px 50px;
+      font-size: 24px;
       font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4),
+                  0 4px 8px rgba(0, 0, 0, 0.1),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      min-width: 150px;
+      user-select: none;
+      position: relative;
+      overflow: visible;
     }
 
-    #recordPanel h2 {
-        margin-top: 0;
-        margin-bottom: 15px;
-        color: #333;
-        font-size: 20px;
+    .click-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
     }
-    table {
-      margin: 15px auto;
-      border-collapse: collapse;
-      width: 95%;
-      max-width: 350px;
+
+    .click-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(102, 126, 234, 0.5),
+                  0 6px 12px rgba(0, 0, 0, 0.15),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.3);
     }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: center;
+
+    .click-button:hover::before {
+      left: 100%;
+    }
+
+    .click-button:active {
+      transform: translateY(0) scale(0.98);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3),
+                  0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* 點擊時文字下沉上浮效果（只應用於按鈕內的文字，不影響按鈕本身） */
+    .click-button.click-text-animation .button-text {
+      animation: textBounce 0.4s ease-out;
+    }
+
+    @keyframes textBounce {
+      0% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(8px);
+      }
+      100% {
+        transform: translateY(0);
+      }
+    }
+
+    /* 滑鼠游標圖標 */
+    .click-button::after {
+      content: '🖱️';
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      font-size: 16px;
+      opacity: 0.6;
+      transition: all 0.3s;
+      pointer-events: none;
+    }
+
+    .click-button:hover::after {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+
+    .click-button:active::after {
+      transform: scale(0.9) translateY(2px);
+    }
+
+    .click-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* 自動點擊按鈕禁用樣式 */
+    .click-button.auto-click-button:disabled {
+      opacity: 0.8;
+      cursor: default;
+    }
+
+    /* 自動點擊按鈕縮小樣式 */
+    .click-button.auto-click-button {
+      padding: 15px 25px;
+      font-size: 18px;
+      min-width: 120px;
+      transform: scale(0.85);
+    }
+
+    .click-button.auto-click-button::after {
+      font-size: 14px;
+      bottom: 3px;
+      right: 3px;
+    }
+
+    /* 自動點擊特效 */
+    .click-button.auto-click-animation {
+      animation: autoClickPulse 0.4s ease-in-out;
+      animation-fill-mode: none;
+    }
+
+    /* 自動點擊文字抖動效果 */
+    .click-button.auto-click-animation .button-text {
+      animation: autoClickTextShake 0.4s ease-in-out;
+      animation-fill-mode: none;
+    }
+
+    @keyframes autoClickTextShake {
+      0%, 100% {
+        transform: translateY(0) rotate(0deg);
+      }
+      10% {
+        transform: translateY(-3px) rotate(-1deg);
+      }
+      20% {
+        transform: translateY(3px) rotate(1deg);
+      }
+      30% {
+        transform: translateY(-4px) rotate(-1.5deg);
+      }
+      40% {
+        transform: translateY(4px) rotate(1.5deg);
+      }
+      50% {
+        transform: translateY(-5px) rotate(-2deg);
+      }
+      60% {
+        transform: translateY(5px) rotate(2deg);
+      }
+      70% {
+        transform: translateY(-4px) rotate(-1.5deg);
+      }
+      80% {
+        transform: translateY(3px) rotate(1deg);
+      }
+      90% {
+        transform: translateY(-2px) rotate(-0.5deg);
+      }
+    }
+
+    @keyframes autoClickPulse {
+      0% {
+        transform: scale(1);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4),
+                    0 4px 8px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+      30% {
+        transform: scale(0.75);
+        box-shadow: 0 0 30px rgba(102, 126, 234, 0.9),
+                    0 0 60px rgba(118, 75, 162, 0.6),
+                    0 4px 12px rgba(0, 0, 0, 0.2);
+        background: linear-gradient(135deg, #7c8ef5 0%, #8a5fb8 100%);
+      }
+      60% {
+        transform: scale(1.1);
+        box-shadow: 0 0 40px rgba(102, 126, 234, 1),
+                    0 0 80px rgba(118, 75, 162, 0.8),
+                    0 8px 24px rgba(0, 0, 0, 0.15);
+        background: linear-gradient(135deg, #8a9ef8 0%, #9a6fc4 100%);
+      }
+      100% {
+        transform: scale(1);
+        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4),
+                    0 4px 8px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      }
+    }
+
+    /* 自動點擊按鈕的機器人圖標 */
+    .click-button.auto-click-button::after {
+      content: '🤖';
+    }
+
+    .clicks-display {
+      font-size: 64px;
+      font-weight: bold;
+      color: #28a745;
+      margin: 25px 0;
+      text-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+      letter-spacing: 1px;
+    }
+
+    .game-controls {
+      margin: 20px 0;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin: 5px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4),
+                  0 2px 5px rgba(0, 0, 0, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #ff5722 0%, #ff8c00 100%);
+      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.6),
+                  0 4px 10px rgba(0, 0, 0, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 10px rgba(255, 107, 53, 0.4),
+                  0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-success {
+      background: #28a745;
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #218838;
+    }
+
+    /* 商店和成就按鈕樣式 - 使用藍色系以提升 emoji 可見度 */
+    .btn-shop {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4),
+                  0 2px 5px rgba(0, 0, 0, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .btn-shop:hover {
+      background: linear-gradient(135deg, #5568d3 0%, #6a3d8f 100%);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6),
+                  0 4px 10px rgba(0, 0, 0, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .btn-shop:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 10px rgba(102, 126, 234, 0.4),
+                  0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-achievement {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      font-weight: bold;
+      box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4),
+                  0 2px 5px rgba(0, 0, 0, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .btn-achievement:hover {
+      background: linear-gradient(135deg, #e081f0 0%, #e0455a 100%);
+      box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6),
+                  0 4px 10px rgba(0, 0, 0, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .btn-achievement:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 10px rgba(245, 87, 108, 0.4),
+                  0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .shop-items {
+      display: grid;
+      gap: 15px;
+    }
+
+    .shop-item {
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      transition: border-color 0.3s;
+    }
+
+    .shop-item:hover {
+      border-color: #667eea;
+    }
+
+    .shop-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .shop-item-name {
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .shop-item-level {
+      background: #667eea;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
       font-size: 14px;
     }
-    th {
-      background-color: #f2f2f2;
-    }
-    #scheduledWaitDisplay {
-        position: fixed;
-        top: 10px;
-        left: 10px;
-        background-color: rgba(230, 230, 230, 0.9);
-        padding: 8px 12px;
-        border: 1px solid #bbb;
-        border-radius: 5px;
-        font-size: 14px;
-        color: #222;
-        z-index: 1000;
-        display: none;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    .shop-item-description {
+      color: #666;
+      margin-bottom: 10px;
+      font-size: 14px;
     }
 
-    /* 手機版樣式 */
-    @media (max-width: 600px) {
-      body {
-        padding: 5px;
+    .shop-item-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .shop-item-price {
+      font-weight: bold;
+      color: #f59e0b;
+      font-size: 18px;
+    }
+
+    .achievements-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .achievement-card {
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .achievement-card.unlocked {
+      border-color: #28a745;
+      background: #f0fff4;
+    }
+
+    .achievement-icon {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .achievement-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .achievement-description {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    /* 歷史記錄模態框使用更大的寬度 */
+    #historyModal .modal-content {
+      max-width: 750px;
+    }
+
+    /* 徽章選擇模態框特定樣式 - 增加寬度和高度 */
+    .badge-select-modal-content {
+      max-width: 800px;
+      width: 85%;
+      max-height: 85vh;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+
+    .tab {
+      padding: 10px 20px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: #666;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .auto-clicker-info {
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-size: 14px;
+    }
+
+    /* 超級帳號時間調整欄位 */
+    .super-account-controls {
+      background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+      padding: 15px;
+      border-radius: 10px;
+      margin: 15px auto;
+      border: 1px solid #d0d0d0;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      width: 50%;
+      max-width: 400px;
+    }
+
+    .super-account-controls h3 {
+      margin: 0 0 10px 0;
+      color: #666666;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .super-account-controls .time-control {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .super-account-controls .time-control-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .super-account-controls label {
+      font-weight: bold;
+      color: #555555;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .super-account-controls .range-container {
+      position: relative;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .super-account-controls .range-label {
+      font-size: 12px;
+      color: #666666;
+      font-weight: bold;
+      white-space: nowrap;
+      min-width: 40px;
+    }
+
+    .super-account-controls input[type="range"] {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: white;
+      outline: none;
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .super-account-controls input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #888888;
+      cursor: pointer;
+      border: 2px solid #aaaaaa;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s;
+    }
+
+    .super-account-controls input[type="range"]::-webkit-slider-thumb:hover {
+      background: #666666;
+      transform: scale(1.1);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .super-account-controls input[type="range"]::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #888888;
+      cursor: pointer;
+      border: 2px solid #aaaaaa;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      transition: all 0.3s;
+    }
+
+    .super-account-controls input[type="range"]::-moz-range-thumb:hover {
+      background: #666666;
+      transform: scale(1.1);
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .super-account-controls .time-value-display {
+      font-size: 16px;
+      font-weight: bold;
+      color: #555555;
+      margin: 0;
+      white-space: nowrap;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
       }
-      #appContainer {
+
+      .header {
         flex-direction: column;
-        gap: 10px;
-        max-width: 100vw;
-      }
-      #gamePanel, #recordPanel {
-        width: 100%;
-        max-width: 100vw;
-        padding: 10px;
-        box-sizing: border-box;
-        margin: 0;
-      }
-      #gameBox {
-        width: 90vw;
-        max-width: 320px;
-        height: 90vw;
-        max-height: 320px;
-        font-size: 18px;
-        line-height: normal;
-        margin: 0 auto 10px auto;
-      }
-      #controlButton {
-        width: 100%;
-        min-width: unset;
-        font-size: 20px;
-        padding: 14px 0;
-      }
-      #reaction {
-        font-size: 16px;
-      }
-      table {
-        font-size: 13px;
-        max-width: 100vw;
-      }
-      th, td {
-        padding: 6px;
-      }
-      #gameBox.center-mobile-message {
-        display: flex;
-        align-items: center;
-        justify-content: center;
         text-align: center;
-        font-size: 18px;
-        padding: 0 10px;
+      }
+
+      .username-display {
+        margin-right: 0;
+        margin-bottom: 10px;
+      }
+
+      .settings-container {
+        margin-left: 0;
+        margin-top: 10px;
+      }
+
+      .settings-dropdown {
+        right: auto;
+        left: 0;
+      }
+
+      .click-button {
+        padding: 25px 40px;
+        font-size: 20px;
+        min-width: 120px;
+      }
+
+      .timer {
+        font-size: 24px;
+      }
+
+      .clicks-display {
+        font-size: 48px;
       }
     }
-
   </style>
 </head>
 <body>
-  <div id="scheduledWaitDisplay"></div>
-  <h1>反應力遊戲</h1>
-
-  <div id="appContainer">
-    <div id="gamePanel">
-      <button id="controlButton">開始遊戲</button>
-      <div id="gameBox">準備開始...</div>
-      <div id="reaction">這裡會顯示反應時間</div>
+  <div class="container">
+    <div class="header">
+      <h1>ClickFast ⚡</h1>
+      <div class="user-info" id="userInfo" style="display: none;">
+        <div class="stat-item">
+          <span>💰</span>
+          <span class="coins" id="coinsDisplay">0</span>
+        </div>
+        <div class="stat-item">
+          <strong>總點擊:</strong> <span id="totalClicksDisplay">0</span>
+        </div>
+        <div class="stat-item">
+          <strong>最佳:</strong> <span id="bestClicksDisplay">0</span>
+        </div>
+        <div class="stat-item">
+          <strong>遊戲數:</strong> <span id="gamesPlayedDisplay">0</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px; margin-left: auto;">
+          <div class="username-display" id="usernameDisplay" onclick="openAccount()">ID: 帳號名稱</div>
+          <div class="settings-container">
+            <button class="settings-btn" onclick="toggleSettings()">
+              ⚙️ 設定
+            </button>
+            <div class="settings-dropdown" id="settingsDropdown">
+              <div class="settings-dropdown-item" onclick="openHistory(); closeSettings();">📊 歷史記錄</div>
+              <div class="settings-dropdown-item logout" onclick="logoutUser(); closeSettings();">🚪 登出</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div id="recordPanel">
-      <h2>最近<span id="maxRecordsDisplay">10</span>次紀錄</h2>
-      <div id="recordsTableContainer"></div>
+    <div id="loginPanel" class="panel login-panel">
+      <h2>歡迎來到 ClickFast！</h2>
+      <p style="margin: 20px 0;">請輸入用戶名開始遊戲</p>
+      <div>
+        <input type="text" id="usernameInput" placeholder="輸入用戶名" maxlength="20">
+        <button onclick="loginOrRegister()">開始遊戲</button>
+      </div>
+    </div>
+
+    <div id="gameContent" style="display: none;">
+      <div class="main-content">
+        <div class="panel game-area">
+          <div class="game-container">
+            <!-- 成就徽章顯示區域（右上角） -->
+            <div class="badges-container-game">
+              <div class="badge-slot" id="badgeSlot1" onclick="selectBadge(1)" title="點擊選擇徽章">
+                <span class="badge-icon" id="badgeIcon1">-</span>
+              </div>
+              <div class="badge-slot" id="badgeSlot2" onclick="selectBadge(2)" title="點擊選擇徽章">
+                <span class="badge-icon" id="badgeIcon2">-</span>
+              </div>
+              <div class="badge-slot" id="badgeSlot3" onclick="selectBadge(3)" title="點擊選擇徽章">
+                <span class="badge-icon" id="badgeIcon3">-</span>
+              </div>
+            </div>
+            <h2>點擊遊戲</h2>
+            <!-- 超級帳號時間調整欄位 -->
+            <div class="super-account-controls" id="superAccountControls" style="display: none;">
+              <h3>👑 超級帳號控制面板</h3>
+              <div class="time-control">
+                <div class="time-control-header">
+                  <label for="superTimeInput">遊戲時長：</label>
+                  <div class="time-value-display" id="superTimeDisplay">10 秒</div>
+                </div>
+                <div class="range-container">
+                  <span class="range-label">5(秒)</span>
+                  <input type="range" id="superTimeInput" min="5" max="30" step="1" value="10">
+                  <span class="range-label">30(秒)</span>
+                </div>
+              </div>
+            </div>
+            <div class="timer" id="timerDisplay">10.0 秒</div>
+            <div class="clicks-display" id="clicksDisplay">0 次點擊</div>
+            <div class="game-controls">
+              <button class="btn btn-primary" id="startButton" onclick="startGame()">開始遊戲</button>
+              <button class="btn btn-shop" onclick="openShop()">🛒 商店</button>
+              <button class="btn btn-achievement" onclick="openAchievements()">🏆 成就</button>
+            </div>
+            <div class="click-buttons-container" id="clickButtonsContainer">
+              <button class="click-button" id="mainClickButton" onclick="handleClick()" disabled>
+                <span class="button-text">點擊！</span>
+              </button>
+            </div>
+            <div class="auto-clicker-info" id="autoClickerInfo" style="display: none;">
+              🤖 自動點擊器: <span id="autoClickerRatePerButton">0</span> 次/秒 × <span id="autoClickerCount">0</span> 個 = <span id="autoClickerTotalRate">0</span> 次/秒
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>最近記錄</h2>
+          <div id="historyContainer">
+            <p style="color: #666;">暫無記錄</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 商店模態框 -->
+  <div class="modal" id="shopModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>商店 🛒</h2>
+        <button class="close-btn" onclick="closeShop()">&times;</button>
+      </div>
+      <div id="shopItemsContainer"></div>
+    </div>
+  </div>
+
+  <!-- 成就模態框 -->
+  <div class="modal" id="achievementsModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>成就 🏆</h2>
+        <button class="close-btn" onclick="closeAchievements()">&times;</button>
+      </div>
+      <div id="achievementsContainer"></div>
+    </div>
+  </div>
+
+  <!-- 成就解鎖通知 -->
+  <div class="modal" id="achievementNotification">
+    <div class="modal-content" style="text-align: center;">
+      <div class="achievement-icon" id="notificationIcon">🏆</div>
+      <h2 id="notificationTitle">成就解鎖！</h2>
+      <p id="notificationDescription"></p>
+      <button class="btn btn-primary" onclick="closeAchievementNotification()">確定</button>
+    </div>
+  </div>
+
+  <!-- 帳號介面模態框（僅玩家資料） -->
+  <div class="modal" id="accountModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>玩家資料 👤</h2>
+        <button class="close-btn" onclick="closeAccount()">&times;</button>
+      </div>
+      <div id="accountContainer">
+        <div id="accountProfileInfo" style="background: #f0f0f0; padding: 15px; border-radius: 5px;">
+          <!-- 玩家資料將在這裡顯示 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 徽章選擇模態框 -->
+  <div class="modal" id="badgeSelectModal">
+    <div class="modal-content badge-select-modal-content">
+      <div class="modal-header">
+        <h2>選擇成就徽章</h2>
+        <button class="close-btn" onclick="closeBadgeSelect()">&times;</button>
+      </div>
+      <div style="padding: 20px;">
+        <p style="margin-bottom: 15px; color: #666;">選擇要顯示在右上角的成就徽章（僅顯示已解鎖的成就）</p>
+        <div id="badgeSelectContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; max-height: 500px; overflow-y: auto; overflow-x: hidden;">
+          <!-- 成就徽章選擇列表將在這裡顯示 -->
+        </div>
+        <div style="margin-top: 20px; text-align: center;">
+          <button class="btn btn-primary" onclick="clearBadgeSlot()">清除當前欄位</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 歷史記錄模態框 -->
+  <div class="modal" id="historyModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>遊戲歷史記錄 📊</h2>
+        <button class="close-btn" onclick="closeHistory()">&times;</button>
+      </div>
+      <div id="detailedHistoryContainer" style="max-height: 500px; overflow-x: auto; overflow-y: auto;">
+        <!-- 詳細歷史記錄將在這裡顯示 -->
+      </div>
     </div>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const GAME_STATE = {
-        IDLE: 'idle',
-        WAITING: 'waiting',
-        READY: 'ready',
-        EARLY_CLICK: 'early',
-        SHOW_RESULT: 'result'
+    // 遊戲狀態
+    let gameState = {
+      isPlaying: false,
+      timeRemaining: 10.0,
+      clicks: 0,
+      gameDuration: 10.0,
+      timerInterval: null,
+      autoClickerIntervals: [], // 改為數組，存儲每個自動按鈕的定時器
+      userProfile: null,
+      purchases: {},
+      autoClickerRate: 0, // 每秒點擊次數（用於顯示）
+      autoClickerInterval: 0, // 點擊間隔時間（毫秒）
+      extraButtons: 0,
+      badges: [null, null, null], // 用戶選擇的三個成就徽章
+    };
+
+    // API 調用函數
+    async function apiCall(url, method = 'GET', data = null, silent = false) {
+      const options = {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
       };
+      
+      if (data) {
+        options.body = JSON.stringify(data);
+      }
 
-      const UI_TEXTS = {
-        BUTTON_START: "開始遊戲",
-        BUTTON_RESTART: "重新開始",
-        BOX_IDLE: "準備開始...",
-        BOX_WAITING: "請等待綠燈...",
-        BOX_READY: "點我！",
-        BOX_EARLY_CLICK: "太快了！",
-        BOX_SHOW_RESULT_DESKTOP: "查看右方紀錄",
-        BOX_SHOW_RESULT_MOBILE: "查看下方紀錄",
-        REACTION_IDLE: "點擊「開始遊戲」按鈕",
-        REACTION_WAITING: "等待中...",
-        REACTION_READY: "",
-        REACTION_EARLY_CLICK: "太快啦！請等綠燈～",
-        REACTION_SHOW_RESULT_PREFIX: "你的反應時間："
-      };
+      try {
+        const response = await fetch(url, options);
+        const result = await response.json();
+        if (response.ok) {
+          return result;
+        } else {
+          throw new Error(result.error || '請求失敗');
+        }
+      } catch (error) {
+        console.error('API Error:', error);
+        // 如果是靜默模式，不顯示 alert
+        // 或者錯誤訊息是「未登錄」（這是正常情況，不需要提示）
+        if (!silent && !(error.message && error.message.includes('未登錄'))) {
+          alert('錯誤: ' + error.message);
+        }
+        throw error;
+      }
+    }
 
-      const COLORS = {
-        IDLE: '#adb5bd',
-        WAITING: '#dc3545',
-        READY: '#28a745',
-        EARLY_CLICK: '#ffc107',
-        SHOW_RESULT: '#6c757d'
-      };
+    // 登錄或註冊
+    async function loginOrRegister() {
+      const username = document.getElementById('usernameInput').value.trim();
+      if (!username) {
+        alert('請輸入用戶名');
+        return;
+      }
 
-      const MAX_RECORDS = 10;
-      const MIN_WAIT_TIME_MS = 1000;
-      const RANDOM_WAIT_ADDITION_MS = 2000;
+      try {
+        const result = await apiCall('/api/login/', 'POST', { username });
+        if (result.success) {
+          gameState.userProfile = result.profile;
+          document.getElementById('loginPanel').style.display = 'none';
+          document.getElementById('gameContent').style.display = 'block';
+          document.getElementById('userInfo').style.display = 'flex';
+          updateProfileDisplay();
+          loadShop();
+          loadAchievements();
+          loadHistory();
+          // 檢查是否為超級帳號
+          checkSuperAccount();
+        }
+      } catch (error) {
+        // 錯誤已在 apiCall 中處理
+      }
+    }
 
-      const controlButton = document.getElementById('controlButton'); // Updated ID
-      const gameBox = document.getElementById('gameBox');
-      const reactionDisplay = document.getElementById('reaction');
-      const recordsTableContainer = document.getElementById('recordsTableContainer');
-      const scheduledWaitDisplay = document.getElementById('scheduledWaitDisplay');
-      document.getElementById('maxRecordsDisplay').textContent = MAX_RECORDS;
+    // 檢查是否為超級帳號
+    function checkSuperAccount() {
+      const superAccountControls = document.getElementById('superAccountControls');
+      if (gameState.userProfile && gameState.userProfile.username === 'super_test') {
+        superAccountControls.style.display = 'block';
+        // 設置當前遊戲時長（限制在5-30秒範圍內）
+        const timeInput = document.getElementById('superTimeInput');
+        const timeDisplay = document.getElementById('superTimeDisplay');
+        if (timeInput && timeDisplay) {
+          const currentTime = Math.max(5, Math.min(30, Math.round(gameState.gameDuration)));
+          timeInput.value = currentTime;
+          timeDisplay.textContent = currentTime + ' 秒';
+          
+          // 移除舊的事件監聽器（如果存在），避免重複綁定
+          const newTimeInput = timeInput.cloneNode(true);
+          timeInput.parentNode.replaceChild(newTimeInput, timeInput);
+          
+          // 添加滑桿事件監聽
+          newTimeInput.addEventListener('input', function() {
+            const newTime = parseInt(this.value);
+            timeDisplay.textContent = newTime + ' 秒';
+            if (!gameState.isPlaying) {
+              updateSuperTime(newTime);
+            }
+          });
+        }
+      } else {
+        superAccountControls.style.display = 'none';
+      }
+    }
 
-      let currentState = GAME_STATE.IDLE;
-      let startTime = 0;
-      let records = [];
-      let gameLogicTimeoutId = null;
-      let currentScheduledWaitTime = 0;
-      let gameHasStartedOnce = false; // Flag to track if the game has started at least once
-
-      function isMobile() {
-        return window.matchMedia("(max-width: 600px)").matches;
+    // 更新超級帳號的遊戲時長
+    function updateSuperTime(newTime) {
+      if (gameState.isPlaying) {
+        return; // 遊戲進行中不允許修改
       }
       
-      function updateRecordsTable() {
-        let tableHtml = `<table>
-                           <tr><th>次數</th><th>反應時間 (毫秒)</th></tr>`;
-        for (let i = 0; i < MAX_RECORDS; i++) {
-          const value = records[i] !== undefined ? records[i] : "-";
-          tableHtml += `<tr><td>${i + 1}</td><td>${value}</td></tr>`;
-        }
-        const validRecords = records.filter(r => typeof r === "number");
-        const sum = validRecords.reduce((acc, cur) => acc + cur, 0);
-        const avg = validRecords.length > 0 ? (sum / validRecords.length).toFixed(2) : "-";
-        tableHtml += `<tr><td>平均</td><td>${avg}</td></tr></table>`;
-        recordsTableContainer.innerHTML = tableHtml;
-      }
-
-      function updateUI(newReactionTime = null) {
-        scheduledWaitDisplay.style.display = 'none';
-        gameBox.style.cursor = 'default'; // Default cursor for gameBox
-        controlButton.disabled = false; // Enable button by default
-        controlButton.textContent = gameHasStartedOnce ? UI_TEXTS.BUTTON_RESTART : UI_TEXTS.BUTTON_START;
-
-
-        if (currentState === GAME_STATE.SHOW_RESULT) {
-            scheduledWaitDisplay.textContent = `本次變綠等待時間: ${(currentScheduledWaitTime / 1000).toFixed(2)} 秒`;
-            scheduledWaitDisplay.style.display = 'block';
-        } else if (currentState === GAME_STATE.READY) {
-            controlButton.disabled = true; // Disable restart button when box is green
-            gameBox.style.cursor = 'pointer'; // Make gameBox clickable
-        }
-
-
-        switch (currentState) {
-          case GAME_STATE.IDLE:
-            gameBox.innerText = UI_TEXTS.BOX_IDLE;
-            gameBox.style.backgroundColor = COLORS.IDLE;
-            reactionDisplay.innerText = UI_TEXTS.REACTION_IDLE;
-            // controlButton text already set
-            break;
-          case GAME_STATE.WAITING:
-            gameBox.innerText = UI_TEXTS.BOX_WAITING;
-            gameBox.style.backgroundColor = COLORS.WAITING;
-            reactionDisplay.innerText = UI_TEXTS.REACTION_WAITING;
-            break;
-          case GAME_STATE.READY:
-            gameBox.innerText = UI_TEXTS.BOX_READY;
-            gameBox.style.backgroundColor = COLORS.READY;
-            reactionDisplay.innerText = UI_TEXTS.REACTION_READY;
-            break;
-          case GAME_STATE.EARLY_CLICK:
-            gameBox.innerText = UI_TEXTS.BOX_EARLY_CLICK;
-            gameBox.style.backgroundColor = COLORS.EARLY_CLICK;
-            reactionDisplay.innerText = UI_TEXTS.REACTION_EARLY_CLICK;
-            break;
-          case GAME_STATE.SHOW_RESULT:
-            if (isMobile()) {
-              gameBox.classList.add('center-mobile-message');
-              gameBox.innerText = UI_TEXTS.BOX_SHOW_RESULT_MOBILE;
-            } else {
-              gameBox.classList.remove('center-mobile-message');
-              gameBox.innerText = UI_TEXTS.BOX_SHOW_RESULT_DESKTOP;
-            }
-            gameBox.style.backgroundColor = COLORS.SHOW_RESULT;
-            if (newReactionTime !== null) {
-              reactionDisplay.innerText = `${UI_TEXTS.REACTION_SHOW_RESULT_PREFIX}${newReactionTime} 毫秒`;
-            }
-            break;
+      if (newTime === undefined) {
+        const timeInput = document.getElementById('superTimeInput');
+        if (timeInput) {
+          newTime = parseInt(timeInput.value);
+        } else {
+          return;
         }
       }
+      
+      if (isNaN(newTime) || newTime < 1 || newTime > 30) {
+        return;
+      }
+      
+      gameState.gameDuration = newTime;
+      gameState.timeRemaining = newTime;
+      document.getElementById('timerDisplay').textContent = newTime + ' 秒';
+    }
 
-      function prepareNewRound() {
-        if (gameLogicTimeoutId) clearTimeout(gameLogicTimeoutId);
-        gameHasStartedOnce = true; // Mark that the game has started
-
-        currentState = GAME_STATE.WAITING;
-        currentScheduledWaitTime = MIN_WAIT_TIME_MS + Math.random() * RANDOM_WAIT_ADDITION_MS;
-        updateUI(); // This will now set button text to "重新開始" if gameHasStartedOnce
-
-        gameLogicTimeoutId = setTimeout(() => {
-          if (currentState === GAME_STATE.WAITING) {
-            currentState = GAME_STATE.READY;
-            updateUI(); // updateUI will handle disabling controlButton when ready
-            startTime = Date.now();
-          }
-        }, currentScheduledWaitTime);
+    // 登出用戶
+    async function logoutUser() {
+      if (!confirm('確定要登出嗎？')) {
+        return;
       }
 
-      controlButton.onclick = () => {
-        // This button now handles starting and restarting in most states
-        if (currentState === GAME_STATE.READY) {
-            // If box is green, button is disabled, so this shouldn't be reachable
-            // But as a safeguard, do nothing or restart if that's desired.
+      try {
+        // 停止所有遊戲計時器
+        if (gameState.timerInterval) {
+          clearInterval(gameState.timerInterval);
+        }
+        // 清除所有自動點擊器定時器
+        gameState.autoClickerIntervals.forEach(interval => clearInterval(interval));
+        gameState.autoClickerIntervals = [];
+
+        // 調用登出 API
+        await apiCall('/api/logout/', 'POST');
+        
+        // 重置遊戲狀態
+        gameState = {
+          isPlaying: false,
+          timeRemaining: 10.0,
+          clicks: 0,
+          gameDuration: 10.0,
+          timerInterval: null,
+          autoClickerIntervals: [],
+          userProfile: null,
+          purchases: {},
+          autoClickerRate: 0,
+          autoClickerInterval: 0,
+          extraButtons: 0,
+          badges: [null, null, null],
+        };
+
+        // 顯示登入面板，隱藏遊戲內容
+        document.getElementById('loginPanel').style.display = 'block';
+        document.getElementById('gameContent').style.display = 'none';
+        document.getElementById('userInfo').style.display = 'none';
+        document.getElementById('usernameInput').value = '';
+        
+        // 關閉所有模態框
+        document.getElementById('shopModal').classList.remove('active');
+        document.getElementById('achievementsModal').classList.remove('active');
+        document.getElementById('accountModal').classList.remove('active');
+        document.getElementById('historyModal').classList.remove('active');
+        document.getElementById('achievementNotification').classList.remove('active');
+      } catch (error) {
+        // 即使 API 調用失敗，也執行登出操作
+        gameState = {
+          isPlaying: false,
+          timeRemaining: 10.0,
+          clicks: 0,
+          gameDuration: 10.0,
+          timerInterval: null,
+          autoClickerIntervals: [],
+          userProfile: null,
+          purchases: {},
+          autoClickerRate: 0,
+          extraButtons: 0,
+        };
+        document.getElementById('loginPanel').style.display = 'block';
+        document.getElementById('gameContent').style.display = 'none';
+        document.getElementById('userInfo').style.display = 'none';
+        document.getElementById('usernameInput').value = '';
+        // 關閉所有模態框
+        document.getElementById('shopModal').classList.remove('active');
+        document.getElementById('achievementsModal').classList.remove('active');
+        document.getElementById('accountModal').classList.remove('active');
+        document.getElementById('historyModal').classList.remove('active');
+        document.getElementById('achievementNotification').classList.remove('active');
+      }
+    }
+
+    // 更新資料顯示
+    function updateProfileDisplay() {
+      if (!gameState.userProfile) return;
+      // 更新帳號名稱（加上 ID: 前綴）
+      if (gameState.userProfile.username) {
+        document.getElementById('usernameDisplay').textContent = 'ID: ' + gameState.userProfile.username;
+      }
+      document.getElementById('coinsDisplay').textContent = gameState.userProfile.coins;
+      document.getElementById('totalClicksDisplay').textContent = gameState.userProfile.total_clicks;
+      document.getElementById('bestClicksDisplay').textContent = gameState.userProfile.best_clicks_per_round;
+      document.getElementById('gamesPlayedDisplay').textContent = gameState.userProfile.total_games_played;
+      
+      // 更新徽章顯示
+      updateBadgesDisplay();
+    }
+
+    // 更新徽章顯示
+    function updateBadgesDisplay() {
+      const badges = gameState.badges || [null, null, null];
+      for (let i = 0; i < 3; i++) {
+        const slot = document.getElementById(`badgeSlot${i + 1}`);
+        const icon = document.getElementById(`badgeIcon${i + 1}`);
+        if (badges[i]) {
+          icon.textContent = badges[i].icon;
+          slot.classList.add('has-badge');
+          slot.title = badges[i].name;
+        } else {
+          icon.textContent = '-';
+          slot.classList.remove('has-badge');
+          slot.title = '點擊選擇徽章';
+        }
+      }
+    }
+
+    // 加載玩家資料
+    async function loadProfile() {
+      try {
+        // 使用靜默模式，避免未登錄時顯示錯誤訊息
+        const result = await apiCall('/api/profile/', 'GET', null, true);
+        gameState.userProfile = result.profile;
+        gameState.purchases = result.purchases || {};
+        gameState.badges = result.badges || [null, null, null];
+        updateProfileDisplay();
+        updateGameUpgrades();
+        // 如果成功加載資料，表示已登錄，顯示遊戲內容
+        document.getElementById('loginPanel').style.display = 'none';
+        document.getElementById('gameContent').style.display = 'block';
+        document.getElementById('userInfo').style.display = 'flex';
+        loadShop();
+        loadAchievements();
+        loadHistory();
+        // 檢查是否為超級帳號
+        checkSuperAccount();
+      } catch (error) {
+        // 如果未登錄，保持登錄面板顯示
+        // 這是正常情況，不需要處理，也不顯示錯誤訊息
+      }
+    }
+
+    // 更新遊戲升級
+    function updateGameUpgrades() {
+      // 更新遊戲時長
+      if (gameState.purchases.time_extension) {
+        gameState.gameDuration = 10.0 + gameState.purchases.time_extension.effect_value;
+      }
+
+      // 更新額外按鈕
+      if (gameState.purchases.extra_button) {
+        gameState.extraButtons = gameState.purchases.extra_button.effect_value;
+        updateClickButtons();
+      }
+
+      // 更新自動點擊器
+      // 根據等級計算點擊頻率：
+      // 等級1：3秒點擊一次
+      // 等級2：2秒點擊一次
+      // 等級3：1秒點擊一次
+      // 等級4+：1秒點擊(等級-2)次
+      if (gameState.purchases.auto_clicker) {
+        const level = gameState.purchases.auto_clicker.level;
+        if (level <= 3) {
+          // 等級1-3：使用間隔時間（3秒、2秒、1秒）
+          gameState.autoClickerRate = 1 / (4 - level); // 轉換為每秒點擊次數，用於顯示
+          gameState.autoClickerInterval = (4 - level) * 1000; // 間隔時間（毫秒）
+        } else {
+          // 等級4+：每秒點擊(等級-2)次
+          gameState.autoClickerRate = level - 2; // 每秒點擊次數
+          gameState.autoClickerInterval = 1000 / (level - 2); // 間隔時間（毫秒）
+        }
+      } else {
+        gameState.autoClickerRate = 0;
+        gameState.autoClickerInterval = 0;
+      }
+      
+      // 更新自動點擊器顯示（需要同時有自動點擊器和額外按鈕）
+      const infoDiv = document.getElementById('autoClickerInfo');
+      if (gameState.autoClickerRate > 0 && gameState.extraButtons > 0) {
+        infoDiv.style.display = 'block';
+        // 計算實際總點擊頻率：每個按鈕的頻率 × 按鈕數量
+        const totalClickRate = gameState.autoClickerRate * gameState.extraButtons;
+        // 更新顯示：每個點擊器頻率、數量、總頻率
+        document.getElementById('autoClickerRatePerButton').textContent = gameState.autoClickerRate.toFixed(2);
+        document.getElementById('autoClickerCount').textContent = gameState.extraButtons;
+        document.getElementById('autoClickerTotalRate').textContent = totalClickRate.toFixed(2);
+      } else {
+        infoDiv.style.display = 'none';
+      }
+
+      // 更新超級帳號控制面板的時間顯示
+      if (gameState.userProfile && gameState.userProfile.username === 'super_test') {
+        const superTimeInput = document.getElementById('superTimeInput');
+        const superTimeDisplay = document.getElementById('superTimeDisplay');
+        if (superTimeInput && superTimeDisplay) {
+          const currentTime = Math.max(5, Math.min(30, Math.round(gameState.gameDuration)));
+          superTimeInput.value = currentTime;
+          superTimeDisplay.textContent = currentTime + ' 秒';
+        }
+      }
+    }
+
+    // 更新點擊按鈕
+    function updateClickButtons() {
+      const container = document.getElementById('clickButtonsContainer');
+      container.innerHTML = '';
+      
+      // 動物emoji列表（由小到大）
+      const animalEmojis = ['🐭', '🐱', '🦁', '🐘', '🦏'];
+      
+      // 主按鈕容器（獨立一行）
+      const mainButtonWrapper = document.createElement('div');
+      mainButtonWrapper.className = 'main-button-wrapper';
+      
+      // 主按鈕（手動點擊，保持滑鼠圖標）
+      const mainButton = document.createElement('button');
+      mainButton.className = 'click-button';
+      mainButton.id = 'mainClickButton';
+      // 如果遊戲未開始，禁用按鈕（顯示為灰色）
+      if (!gameState.isPlaying) {
+        mainButton.disabled = true;
+      }
+      const mainButtonText = document.createElement('span');
+      mainButtonText.className = 'button-text';
+      mainButtonText.textContent = '點擊！';
+      mainButton.appendChild(mainButtonText);
+      mainButton.onclick = handleClick;
+      mainButtonWrapper.appendChild(mainButton);
+      container.appendChild(mainButtonWrapper);
+
+      // 如果有自動點擊按鈕，創建自動點擊按鈕容器
+      if (gameState.extraButtons > 0) {
+        const autoClickWrapper = document.createElement('div');
+        autoClickWrapper.className = 'auto-click-buttons-wrapper';
+        
+        // 額外按鈕（自動點擊按鈕，使用機器人圖標）
+        for (let i = 0; i < gameState.extraButtons; i++) {
+          const extraButton = document.createElement('button');
+          extraButton.className = 'click-button auto-click-button'; // 添加auto-click-button類
+          extraButton.id = `autoClickButton${i + 1}`; // 為每個按鈕設置唯一ID
+          // 更新按鈕名稱：改為"AutoClick" + 動物emoji
+          const buttonText = document.createElement('span');
+          buttonText.className = 'button-text';
+          const animalEmoji = animalEmojis[i] || '🤖'; // 如果超過5個，使用機器人
+          buttonText.textContent = `AutoClick ${animalEmoji}`;
+          extraButton.appendChild(buttonText);
+          // 不允許用戶點擊自動點擊按鈕
+          extraButton.disabled = true;
+          extraButton.style.pointerEvents = 'none';
+          autoClickWrapper.appendChild(extraButton);
+        }
+        
+        container.appendChild(autoClickWrapper);
+      }
+    }
+
+    // 開始遊戲
+    function startGame() {
+      if (gameState.isPlaying) return;
+
+      gameState.isPlaying = true;
+      gameState.clicks = 0;
+      gameState.timeRemaining = gameState.gameDuration;
+      document.getElementById('startButton').disabled = true;
+      document.getElementById('clicksDisplay').textContent = '0 次點擊';
+      document.getElementById('timerDisplay').textContent = gameState.gameDuration.toFixed(1) + ' 秒';
+      
+      // 啟用點擊按鈕
+      const mainButton = document.getElementById('mainClickButton');
+      if (mainButton) {
+        mainButton.disabled = false;
+      }
+      
+      updateClickButtons();
+
+      // 更新計時器
+      gameState.timerInterval = setInterval(() => {
+        gameState.timeRemaining -= 0.1;
+        if (gameState.timeRemaining <= 0) {
+          gameState.timeRemaining = 0;
+          endGame();
+        }
+        document.getElementById('timerDisplay').textContent = gameState.timeRemaining.toFixed(1) + ' 秒';
+      }, 100);
+
+      // 自動點擊器：所有額外按鈕以相同頻率同時觸發
+      // 每個按鈕以 autoClickerInterval 的間隔自動點擊
+      if (gameState.autoClickerRate > 0 && gameState.extraButtons > 0) {
+        // 清除之前的定時器
+        gameState.autoClickerIntervals.forEach(interval => clearInterval(interval));
+        gameState.autoClickerIntervals = [];
+        
+        // 使用預先計算的間隔時間（毫秒）
+        const clickInterval = gameState.autoClickerInterval;
+        
+        // 更新顯示的實際總點擊頻率
+        const totalClickRate = gameState.autoClickerRate * gameState.extraButtons;
+        // 更新顯示：每個點擊器頻率、數量、總頻率
+        const ratePerButtonElement = document.getElementById('autoClickerRatePerButton');
+        const countElement = document.getElementById('autoClickerCount');
+        const totalRateElement = document.getElementById('autoClickerTotalRate');
+        if (ratePerButtonElement) {
+          ratePerButtonElement.textContent = gameState.autoClickerRate.toFixed(2);
+        }
+        if (countElement) {
+          countElement.textContent = gameState.extraButtons;
+        }
+        if (totalRateElement) {
+          totalRateElement.textContent = totalClickRate.toFixed(2);
+        }
+        
+        // 創建單一定時器，同時觸發所有按鈕
+        const interval = setInterval(() => {
+          // 檢查遊戲是否還在進行
+          if (!gameState.isPlaying) {
+            clearInterval(interval);
             return;
-        }
-        // For IDLE, WAITING, EARLY_CLICK, SHOW_RESULT, clicking the button will prepare a new round.
-        prepareNewRound();
-      };
-
-      gameBox.onclick = () => {
-        if (currentState === GAME_STATE.READY) { // Only active when box is green
-            if (gameLogicTimeoutId) { // Should not be a timeout here, but good practice
-                clearTimeout(gameLogicTimeoutId);
-                gameLogicTimeoutId = null;
+          }
+          
+          // 為每個額外按鈕增加點擊數
+          for (let i = 0; i < gameState.extraButtons; i++) {
+            gameState.clicks++;
+          }
+          updateClicksDisplay();
+          
+          // 同時觸發所有額外按鈕的特效
+          for (let i = 0; i < gameState.extraButtons; i++) {
+            const buttonId = `autoClickButton${i + 1}`;
+            const button = document.getElementById(buttonId);
+            if (button && gameState.isPlaying) {
+              // 先移除可能存在的動畫類，確保動畫能重新觸發
+              button.classList.remove('auto-click-animation');
+              // 使用 requestAnimationFrame 確保 DOM 更新後再添加動畫
+              requestAnimationFrame(() => {
+                if (gameState.isPlaying && button) {
+                  button.classList.add('auto-click-animation');
+                  // 動畫時長是 0.4s (400ms)，所以設置 450ms 後移除，確保動畫完成
+                  setTimeout(() => {
+                    if (button) {
+                      button.classList.remove('auto-click-animation');
+                    }
+                  }, 450);
+                }
+              });
             }
-            const reactionTime = Date.now() - startTime;
-            records.unshift(reactionTime);
-            if (records.length > MAX_RECORDS) {
-              records.pop();
-            }
-            updateRecordsTable();
-            currentState = GAME_STATE.SHOW_RESULT;
-            updateUI(reactionTime); // updateUI will re-enable controlButton
-        } else if (currentState === GAME_STATE.WAITING) {
-            // If user clicks red box, treat it as an early click.
-            // The "重新開始" button is the main way to restart.
-            if (gameLogicTimeoutId) clearTimeout(gameLogicTimeoutId);
-            currentState = GAME_STATE.EARLY_CLICK;
-            updateUI();
-        }
-        // In other states (IDLE, EARLY_CLICK, SHOW_RESULT), gameBox click does nothing by default
-        // as control is with the controlButton.
-      };
+          }
+        }, clickInterval);
+        
+        gameState.autoClickerIntervals.push(interval);
+      }
+    }
 
-      window.addEventListener('resize', () => {
-        if (currentState === GAME_STATE.SHOW_RESULT) {
-          updateUI();
+    // 處理點擊
+    function handleClick(event) {
+      if (!gameState.isPlaying) return;
+      gameState.clicks++;
+      updateClicksDisplay();
+      
+      // 觸發特效動畫（只應用於主按鈕）
+      if (event && event.target) {
+        const button = event.target;
+        // 確保只對主按鈕應用動畫，避免影響其他按鈕
+        // 如果點擊的是按鈕內的span，則找到父按鈕
+        const targetButton = button.id === 'mainClickButton' 
+          ? button 
+          : (button.closest && button.closest('#mainClickButton')) 
+            ? button.closest('#mainClickButton')
+            : null;
+        
+        if (targetButton && targetButton.id === 'mainClickButton') {
+          // 觸發文字下沉上浮動畫
+          targetButton.classList.add('click-text-animation');
+          setTimeout(() => {
+            targetButton.classList.remove('click-text-animation');
+          }, 400);
+          
+          // 觸發自動點擊特效（與自動點擊按鈕相同的特效）
+          targetButton.classList.remove('auto-click-animation');
+          requestAnimationFrame(() => {
+            if (gameState.isPlaying && targetButton) {
+              targetButton.classList.add('auto-click-animation');
+              setTimeout(() => {
+                if (targetButton) {
+                  targetButton.classList.remove('auto-click-animation');
+                }
+              }, 450);
+            }
+          });
+        }
+      }
+    }
+
+    // 更新點擊顯示
+    function updateClicksDisplay() {
+      document.getElementById('clicksDisplay').textContent = Math.floor(gameState.clicks) + ' 次點擊';
+    }
+
+    // 結束遊戲
+    async function endGame() {
+      // 先停止遊戲狀態，防止新的動畫觸發
+      gameState.isPlaying = false;
+      
+      // 清除計時器
+      if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+        gameState.timerInterval = null;
+      }
+      
+      // 清除所有自動點擊器定時器
+      gameState.autoClickerIntervals.forEach(interval => {
+        if (interval) {
+          clearInterval(interval);
+        }
+      });
+      gameState.autoClickerIntervals = [];
+      
+      // 等待所有動畫完成後再繼續（給動畫一些時間完成）
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const finalClicks = Math.floor(gameState.clicks);
+      document.getElementById('timerDisplay').textContent = '0.0 秒';
+      document.getElementById('startButton').disabled = false;
+      
+      // 禁用點擊按鈕（遊戲結束後變為灰色）
+      const mainButton = document.getElementById('mainClickButton');
+      if (mainButton) {
+        mainButton.disabled = true;
+      }
+
+      // 提交遊戲結果
+      try {
+        const result = await apiCall('/api/submit-game/', 'POST', {
+          clicks: finalClicks,
+          game_duration: gameState.gameDuration
+        });
+
+        // 更新資料
+        gameState.userProfile = result.profile;
+        updateProfileDisplay();
+
+        // 顯示新成就
+        if (result.new_achievements && result.new_achievements.length > 0) {
+          showAchievementNotification(result.new_achievements[0]);
+        }
+
+        // 重新加載歷史記錄
+        loadHistory();
+      } catch (error) {
+        // 錯誤處理
+      }
+    }
+
+    // 加載商店
+    async function loadShop() {
+      try {
+        const result = await apiCall('/api/shop/');
+        displayShopItems(result.items);
+      } catch (error) {
+        // 錯誤處理
+      }
+    }
+
+    // 顯示商店物品
+    function displayShopItems(items) {
+      const container = document.getElementById('shopItemsContainer');
+      container.innerHTML = '';
+
+      items.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'shop-item';
+        itemDiv.innerHTML = `
+          <div class="shop-item-header">
+            <div class="shop-item-name">${item.name}</div>
+            <div class="shop-item-level">Lv.${item.current_level}/${item.max_level}</div>
+          </div>
+          <div class="shop-item-description">${item.description}</div>
+          <div class="shop-item-footer">
+            <div class="shop-item-price">
+              ${item.can_upgrade ? item.next_level_price + ' 💰' : '已滿級'}
+            </div>
+            <button class="btn btn-primary" 
+                    onclick="purchaseItem(${item.id})" 
+                    ${!item.can_upgrade ? 'disabled' : ''}>
+              ${item.can_upgrade ? '購買' : '已滿級'}
+            </button>
+          </div>
+        `;
+        container.appendChild(itemDiv);
+      });
+    }
+
+    // 購買物品
+    async function purchaseItem(itemId) {
+      try {
+        const result = await apiCall('/api/purchase/', 'POST', { item_id: itemId });
+        if (result.success) {
+          await loadProfile();
+          await loadShop();
+          alert('購買成功！');
+        }
+      } catch (error) {
+        // 錯誤已在 apiCall 中處理
+      }
+    }
+
+    // 打開商店
+    function openShop() {
+      document.getElementById('shopModal').classList.add('active');
+      loadShop();
+    }
+
+    // 關閉商店
+    function closeShop() {
+      document.getElementById('shopModal').classList.remove('active');
+    }
+
+    // 加載成就
+    async function loadAchievements() {
+      try {
+        const result = await apiCall('/api/achievements/');
+        displayAchievements(result.achievements);
+      } catch (error) {
+        // 錯誤處理
+      }
+    }
+
+    // 顯示成就
+    function displayAchievements(achievements) {
+      const container = document.getElementById('achievementsContainer');
+      container.innerHTML = '';
+
+      achievements.forEach(achievement => {
+        const card = document.createElement('div');
+        card.className = 'achievement-card' + (achievement.unlocked ? ' unlocked' : '');
+        card.innerHTML = `
+          <div class="achievement-icon">${achievement.icon}</div>
+          <div class="achievement-name">${achievement.name}</div>
+          <div class="achievement-description">${achievement.description}</div>
+          ${achievement.reward_coins > 0 ? `<div style="margin-top: 5px; color: #f59e0b;">獎勵: ${achievement.reward_coins} 💰</div>` : ''}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // 打開成就
+    function openAchievements() {
+      document.getElementById('achievementsModal').classList.add('active');
+      loadAchievements();
+    }
+
+    // 關閉成就
+    function closeAchievements() {
+      document.getElementById('achievementsModal').classList.remove('active');
+    }
+
+    // 選擇徽章欄位
+    let currentBadgeSlot = null;
+    async function selectBadge(slotNumber) {
+      currentBadgeSlot = slotNumber;
+      // 獲取已解鎖的成就
+      try {
+        const result = await apiCall('/api/achievements/');
+        const unlockedAchievements = result.achievements.filter(a => a.unlocked);
+        
+        if (unlockedAchievements.length === 0) {
+          alert('您還沒有解鎖任何成就！');
+          return;
+        }
+        
+        // 顯示徽章選擇模態框
+        displayBadgeSelection(unlockedAchievements);
+        document.getElementById('badgeSelectModal').classList.add('active');
+      } catch (error) {
+        alert('載入成就失敗：' + (error.message || '未知錯誤'));
+      }
+    }
+
+    // 顯示徽章選擇列表
+    function displayBadgeSelection(achievements) {
+      const container = document.getElementById('badgeSelectContainer');
+      container.innerHTML = '';
+      
+      // 添加成就選項
+      achievements.forEach(achievement => {
+        const badgeOption = document.createElement('div');
+        badgeOption.style.cssText = 'text-align: center; padding: 15px; border: 2px solid #e0e0e0; border-radius: 8px; cursor: pointer; background: white; transition: all 0.3s; height: 100px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box;';
+        badgeOption.innerHTML = `
+          <div style="font-size: 32px; margin-bottom: 5px; line-height: 1; flex-shrink: 0;">${achievement.icon}</div>
+          <div style="font-size: 12px; color: #666; word-break: break-word; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; max-height: 2.6em;">${achievement.name}</div>
+        `;
+        badgeOption.onclick = () => {
+          updateBadge(currentBadgeSlot, achievement.id);
+        };
+        badgeOption.onmouseenter = function() {
+          this.style.borderColor = '#667eea';
+          this.style.background = '#f0f4ff';
+        };
+        badgeOption.onmouseleave = function() {
+          this.style.borderColor = '#e0e0e0';
+          this.style.background = 'white';
+        };
+        container.appendChild(badgeOption);
+      });
+    }
+
+    // 更新徽章
+    async function updateBadge(slotNumber, achievementId) {
+      try {
+        const badges = gameState.badges || [null, null, null];
+        const badgeIds = badges.map(b => b ? b.id : null);
+        badgeIds[slotNumber - 1] = achievementId;
+        
+        const result = await apiCall('/api/update-badges/', 'POST', {
+          badge_1_id: badgeIds[0],
+          badge_2_id: badgeIds[1],
+          badge_3_id: badgeIds[2],
+        });
+        
+        if (result.success) {
+          gameState.badges = result.badges;
+          updateBadgesDisplay();
+          closeBadgeSelect();
+        }
+      } catch (error) {
+        alert('更新徽章失敗：' + (error.message || '未知錯誤'));
+      }
+    }
+
+    // 清除當前欄位
+    function clearBadgeSlot() {
+      if (currentBadgeSlot) {
+        updateBadge(currentBadgeSlot, null);
+      }
+    }
+
+    // 關閉徽章選擇模態框
+    function closeBadgeSelect() {
+      document.getElementById('badgeSelectModal').classList.remove('active');
+      currentBadgeSlot = null;
+    }
+
+    // 顯示成就通知
+    function showAchievementNotification(achievement) {
+      document.getElementById('notificationIcon').textContent = achievement.icon;
+      document.getElementById('notificationTitle').textContent = achievement.name;
+      document.getElementById('notificationDescription').textContent = achievement.description;
+      if (achievement.reward_coins > 0) {
+        document.getElementById('notificationDescription').textContent += `\n獲得 ${achievement.reward_coins} 金幣！`;
+      }
+      document.getElementById('achievementNotification').classList.add('active');
+    }
+
+    // 關閉成就通知
+    function closeAchievementNotification() {
+      document.getElementById('achievementNotification').classList.remove('active');
+    }
+
+    // 切換設定下拉選單
+    function toggleSettings() {
+      const dropdown = document.getElementById('settingsDropdown');
+      dropdown.classList.toggle('active');
+    }
+
+    // 關閉設定下拉選單
+    function closeSettings() {
+      const dropdown = document.getElementById('settingsDropdown');
+      dropdown.classList.remove('active');
+    }
+
+    // 打開帳號介面（僅玩家資料）
+    function openAccount() {
+      document.getElementById('accountModal').classList.add('active');
+      loadAccountInfo();
+    }
+
+    // 關閉帳號介面
+    function closeAccount() {
+      document.getElementById('accountModal').classList.remove('active');
+    }
+
+    // 打開歷史記錄介面
+    function openHistory() {
+      document.getElementById('historyModal').classList.add('active');
+      loadDetailedHistory();
+    }
+
+    // 關閉歷史記錄介面
+    function closeHistory() {
+      document.getElementById('historyModal').classList.remove('active');
+    }
+
+    // 加載帳號資訊
+    function loadAccountInfo() {
+      if (!gameState.userProfile) return;
+      
+      const container = document.getElementById('accountProfileInfo');
+      const profile = gameState.userProfile;
+      
+      // 格式化創立日期
+      let createdDateStr = '未知';
+      if (profile.created_at) {
+        const createdDate = new Date(profile.created_at);
+        createdDateStr = createdDate.toLocaleString('zh-TW', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      }
+      
+      container.innerHTML = `
+        <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #e0e0e0;">
+          <h4 style="margin-bottom: 15px; color: #667eea;">基本資料</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+              <strong>👤 帳號名稱:</strong> ${profile.username || '未知'}
+            </div>
+            <div>
+              <strong>📅 創立日期:</strong> ${createdDateStr}
+            </div>
+            <div>
+              <strong>⚔️ 對戰勝場數:</strong> ${(profile.battle_wins || 0).toLocaleString()}
+            </div>
+          </div>
+        </div>
+        <div>
+          <h4 style="margin-bottom: 15px; color: #667eea;">遊戲統計</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <div>
+              <strong>💰 金幣:</strong> ${profile.coins.toLocaleString()}
+            </div>
+            <div>
+              <strong>總點擊數:</strong> ${profile.total_clicks.toLocaleString()}
+            </div>
+            <div>
+              <strong>單局最佳:</strong> ${profile.best_clicks_per_round.toLocaleString()}
+            </div>
+            <div>
+              <strong>遊戲局數:</strong> ${profile.total_games_played.toLocaleString()}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 加載詳細歷史記錄（固定顯示20筆）
+    async function loadDetailedHistory() {
+      try {
+        const result = await apiCall('/api/history/?limit=20');
+        displayDetailedHistory(result.history);
+      } catch (error) {
+        // 錯誤處理
+        const container = document.getElementById('detailedHistoryContainer');
+        container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">載入歷史記錄時發生錯誤</p>';
+      }
+    }
+
+    // 顯示詳細歷史記錄
+    function displayDetailedHistory(history) {
+      const container = document.getElementById('detailedHistoryContainer');
+      if (history.length === 0) {
+        container.innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">暫無記錄</p>';
+        return;
+      }
+
+      let html = '<table style="width: 100%; border-collapse: collapse; font-size: 14px;">';
+      html += '<thead>';
+      html += '<tr style="background: #f0f0f0;">';
+      html += '<th style="padding: 10px; border-bottom: 2px solid #e0e0e0; text-align: left; white-space: nowrap; min-width: 150px;">日期時間</th>';
+      html += '<th style="padding: 10px; border-bottom: 2px solid #e0e0e0; text-align: center; white-space: nowrap; min-width: 80px;">點擊數</th>';
+      html += '<th style="padding: 10px; border-bottom: 2px solid #e0e0e0; text-align: center; white-space: nowrap; min-width: 100px;">遊戲時長</th>';
+      html += '<th style="padding: 10px; border-bottom: 2px solid #e0e0e0; text-align: center; white-space: nowrap; min-width: 120px;">獲得金幣</th>';
+      html += '<th style="padding: 10px; border-bottom: 2px solid #e0e0e0; text-align: center; white-space: nowrap; min-width: 100px;">點擊率</th>';
+      html += '</tr>';
+      html += '</thead>';
+      html += '<tbody>';
+      
+      history.forEach(session => {
+        const date = new Date(session.played_at);
+        const dateStr = date.toLocaleString('zh-TW', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        const clickRate = session.game_duration > 0 
+          ? (session.clicks / session.game_duration).toFixed(2) 
+          : '0.00';
+        
+        html += `<tr style="border-bottom: 1px solid #e0e0e0;">`;
+        html += `<td style="padding: 10px; white-space: nowrap;">${dateStr}</td>`;
+        html += `<td style="padding: 10px; text-align: center; font-weight: bold; white-space: nowrap;">${session.clicks.toLocaleString()}</td>`;
+        html += `<td style="padding: 10px; text-align: center; white-space: nowrap;">${session.game_duration.toFixed(1)} 秒</td>`;
+        html += `<td style="padding: 10px; text-align: center; color: #f59e0b; font-weight: bold; white-space: nowrap;">+${session.coins_earned.toLocaleString()} 💰</td>`;
+        html += `<td style="padding: 10px; text-align: center; white-space: nowrap;">${clickRate} 次/秒</td>`;
+        html += `</tr>`;
+      });
+      
+      html += '</tbody>';
+      html += '</table>';
+      container.innerHTML = html;
+    }
+
+    // 加載歷史記錄
+    async function loadHistory() {
+      try {
+        const result = await apiCall('/api/history/?limit=10');
+        displayHistory(result.history);
+      } catch (error) {
+        // 錯誤處理
+      }
+    }
+
+    // 顯示歷史記錄
+    function displayHistory(history) {
+      const container = document.getElementById('historyContainer');
+      if (history.length === 0) {
+        container.innerHTML = '<p style="color: #666;">暫無記錄</p>';
+        return;
+      }
+
+      let html = '<table style="width: 100%; border-collapse: collapse;">';
+      html += '<tr><th style="padding: 8px; border-bottom: 2px solid #e0e0e0; text-align: center; white-space: nowrap; min-width: 60px;">點擊</th><th style="padding: 8px; border-bottom: 2px solid #e0e0e0; text-align: center; white-space: nowrap; min-width: 60px;">時長</th><th style="padding: 8px; border-bottom: 2px solid #e0e0e0; text-align: center; white-space: nowrap; min-width: 80px;">金幣</th></tr>';
+      
+      history.forEach(session => {
+        const date = new Date(session.played_at);
+        html += `<tr>
+          <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; text-align: center; white-space: nowrap;">${session.clicks}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; text-align: center; white-space: nowrap;">${session.game_duration.toFixed(1)} 秒</td>
+          <td style="padding: 8px; border-bottom: 1px solid #e0e0e0; text-align: center; white-space: nowrap;">+${session.coins_earned} 💰</td>
+        </tr>`;
+      });
+      
+      html += '</table>';
+      container.innerHTML = html;
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      // 回車鍵登錄
+      document.getElementById('usernameInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          loginOrRegister();
         }
       });
 
-      // Initial setup
-      updateRecordsTable();
-      currentState = GAME_STATE.IDLE;
-      updateUI();
+      // 點擊模態框外部關閉
+      document.getElementById('shopModal').addEventListener('click', (e) => {
+        if (e.target.id === 'shopModal') {
+          closeShop();
+        }
+      });
+
+      document.getElementById('achievementsModal').addEventListener('click', (e) => {
+        if (e.target.id === 'achievementsModal') {
+          closeAchievements();
+        }
+      });
+
+      // 徽章選擇模態框點擊外部關閉
+      document.getElementById('badgeSelectModal').addEventListener('click', (e) => {
+        if (e.target.id === 'badgeSelectModal') {
+          closeBadgeSelect();
+        }
+      });
+
+      document.getElementById('accountModal').addEventListener('click', (e) => {
+        if (e.target.id === 'accountModal') {
+          closeAccount();
+        }
+      });
+
+      document.getElementById('historyModal').addEventListener('click', (e) => {
+        if (e.target.id === 'historyModal') {
+          closeHistory();
+        }
+      });
+
+      // 點擊外部關閉設定下拉選單
+      document.addEventListener('click', (e) => {
+        const settingsContainer = document.querySelector('.settings-container');
+        const settingsDropdown = document.getElementById('settingsDropdown');
+        if (settingsContainer && settingsDropdown && 
+            !settingsContainer.contains(e.target) && 
+            settingsDropdown.classList.contains('active')) {
+          closeSettings();
+        }
+      });
+
+      // 嘗試加載已有資料
+      loadProfile();
     });
   </script>
 </body>

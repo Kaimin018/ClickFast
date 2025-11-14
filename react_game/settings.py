@@ -129,3 +129,47 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# 日誌配置
+# 過濾掉未登錄時的 401 警告（這是正常行為，不需要記錄為警告）
+import logging
+
+class SkipUnauthorizedFilter(logging.Filter):
+    """過濾掉 /api/profile/ 的 401 未登錄警告"""
+    def filter(self, record):
+        # 檢查是否是 401 錯誤且路徑是 /api/profile/
+        if hasattr(record, 'status_code') and record.status_code == 401:
+            if hasattr(record, 'request') and hasattr(record.request, 'path'):
+                if '/api/profile/' in record.request.path:
+                    return False  # 過濾掉這個日誌
+        return True  # 保留其他日誌
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'skip_unauthorized': {
+            '()': SkipUnauthorizedFilter,
+        },
+    },
+    'formatters': {
+        'default': {
+            'format': '[{asctime}] "{method} {path} HTTP/1.1" {status_code} {size}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'filters': ['skip_unauthorized'],
+            'formatter': 'default',
+        },
+    },
+    'loggers': {
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
