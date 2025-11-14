@@ -21,7 +21,7 @@ class Command(BaseCommand):
             {
                 'name': '額外點擊按鈕',
                 'item_type': 'extra_button',
-                'description': '增加額外的點擊按鈕，每次升級增加1個按鈕',
+                'description': '增加額外的點擊按鈕，每次升級增加1個按鈕。首次購買時會自動獲得1等級的自動點擊器',
                 'base_price': 100,
                 'effect_value': 1.0,  # 每次升級增加1個按鈕
                 'max_level': 5,
@@ -29,7 +29,7 @@ class Command(BaseCommand):
             {
                 'name': '自動點擊器',
                 'item_type': 'auto_clicker',
-                'description': '自動點擊器：Lv.1每3秒點擊1次，Lv.2每2秒點擊1次，Lv.3每1秒點擊1次，Lv.4+每秒點擊(等級-2)次',
+                'description': '自動點擊器：Lv.1每3秒點擊1次，Lv.2每2秒點擊1次，Lv.3每1秒點擊1次，Lv.4+每秒點擊(等級-2)次。需要先購買「額外點擊按鈕」才能購買',
                 'base_price': 200,
                 'effect_value': 5.0,  # 此值不再使用，頻率由等級直接計算
                 'max_level': 10,

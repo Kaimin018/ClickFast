@@ -643,6 +643,39 @@
       font-size: 18px;
     }
 
+    .shop-item.disabled {
+      opacity: 0.5;
+      background: #f5f5f5;
+      border-color: #ccc;
+    }
+
+    .shop-item.disabled:hover {
+      border-color: #ccc;
+    }
+
+    .shop-item.disabled .shop-item-name {
+      color: #999;
+    }
+
+    .shop-item.disabled .shop-item-level {
+      background: #999;
+    }
+
+    .shop-item.disabled .shop-item-description {
+      color: #999;
+    }
+
+    .shop-item.disabled .shop-item-price {
+      color: #999;
+    }
+
+    .shop-item-requirement {
+      color: #dc3545;
+      font-size: 12px;
+      margin-top: 8px;
+      font-weight: bold;
+    }
+
     .achievements-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -2000,21 +2033,43 @@
 
       items.forEach(item => {
         const itemDiv = document.createElement('div');
-        itemDiv.className = 'shop-item';
+        const isDisabled = item.requires_extra_button && !item.can_upgrade;
+        itemDiv.className = 'shop-item' + (isDisabled ? ' disabled' : '');
+        
+        let requirementText = '';
+        if (item.requires_extra_button && !item.can_upgrade) {
+          requirementText = '<div class="shop-item-requirement">⚠️ 前置條件：需要先購買「額外點擊按鈕」</div>';
+        }
+        
+        // 判斷顯示文字
+        let priceText = '';
+        let buttonText = '';
+        if (item.can_upgrade) {
+          priceText = item.next_level_price + ' 💰';
+          buttonText = '購買';
+        } else if (item.is_unpurchased) {
+          priceText = '未購買';
+          buttonText = '未購買';
+        } else {
+          priceText = '已滿級';
+          buttonText = '已滿級';
+        }
+        
         itemDiv.innerHTML = `
           <div class="shop-item-header">
             <div class="shop-item-name">${item.name}</div>
             <div class="shop-item-level">Lv.${item.current_level}/${item.max_level}</div>
           </div>
           <div class="shop-item-description">${item.description}</div>
+          ${requirementText}
           <div class="shop-item-footer">
             <div class="shop-item-price">
-              ${item.can_upgrade ? item.next_level_price + ' 💰' : '已滿級'}
+              ${priceText}
             </div>
             <button class="btn btn-primary" 
                     onclick="purchaseItem(${item.id})" 
                     ${!item.can_upgrade ? 'disabled' : ''}>
-              ${item.can_upgrade ? '購買' : '已滿級'}
+              ${buttonText}
             </button>
           </div>
         `;
@@ -2030,7 +2085,7 @@
           await loadProfile();
           await loadShop();
           // 顯示美化的購買成功通知
-          showPurchaseToast(result.new_level);
+          showPurchaseToast(result.item_name, result.new_level);
         }
       } catch (error) {
         // 錯誤已在 apiCall 中處理
@@ -2043,9 +2098,9 @@
     let isPurchaseToastShowing = false;
 
     // 顯示購買成功通知（使用隊列系統）
-    function showPurchaseToast(newLevel) {
-      // 將通知加入隊列
-      purchaseToastQueue.push(newLevel);
+    function showPurchaseToast(itemName, newLevel) {
+      // 將通知加入隊列（包含商品名稱和等級）
+      purchaseToastQueue.push({ itemName, newLevel });
       
       // 如果當前沒有通知在顯示，立即顯示下一個
       if (!isPurchaseToastShowing) {
@@ -2065,13 +2120,17 @@
       isPurchaseToastShowing = true;
       
       // 從隊列中取出第一個通知
-      const newLevel = purchaseToastQueue.shift();
+      const notification = purchaseToastQueue.shift();
       const toast = document.getElementById('purchaseToast');
       const messageEl = document.getElementById('purchaseToastMessage');
       
-      // 設置通知內容
-      if (newLevel) {
-        messageEl.textContent = `已升級到等級 ${newLevel}`;
+      // 設置通知內容（包含商品名稱和等級）
+      if (notification.itemName && notification.newLevel) {
+        messageEl.textContent = `${notification.itemName} 已升級到等級 ${notification.newLevel}`;
+      } else if (notification.itemName) {
+        messageEl.textContent = `${notification.itemName} 已成功購買`;
+      } else if (notification.newLevel) {
+        messageEl.textContent = `已升級到等級 ${notification.newLevel}`;
       } else {
         messageEl.textContent = '物品已成功購買';
       }

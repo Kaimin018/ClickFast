@@ -288,6 +288,17 @@ def api_get_shop(request):
     items = ShopItem.objects.all()
     shop_data = []
     
+    # 檢查是否有額外點擊按鈕
+    extra_button_level = 0
+    if request.user.is_authenticated:
+        extra_button_item = ShopItem.objects.filter(item_type='extra_button').first()
+        if extra_button_item:
+            extra_button_purchase = PlayerPurchase.objects.filter(
+                user=request.user,
+                shop_item=extra_button_item
+            ).first()
+            extra_button_level = extra_button_purchase.level if extra_button_purchase else 0
+    
     for item in items:
         # 獲取玩家當前等級
         current_level = 0
@@ -297,6 +308,18 @@ def api_get_shop(request):
         
         # 計算下一級價格（價格遞增：基礎價格 * (等級 + 1)）
         next_level_price = item.base_price * (current_level + 1) if current_level < item.max_level else None
+        
+        # 對於自動點擊器，檢查前置條件（需要額外點擊按鈕）
+        requires_extra_button = item.item_type == 'auto_clicker'
+        can_upgrade = current_level < item.max_level and next_level_price is not None
+        
+        # 如果沒有額外點擊按鈕且沒有自動點擊器，自動點擊器不能升級
+        # 如果已經有自動點擊器（current_level > 0），則可以升級
+        if requires_extra_button and extra_button_level == 0 and current_level == 0:
+            can_upgrade = False
+        
+        # 判斷是否為未購買狀態（等級為0且未達到最大等級）
+        is_unpurchased = current_level == 0 and current_level < item.max_level
         
         shop_data.append({
             'id': item.id,
@@ -308,7 +331,9 @@ def api_get_shop(request):
             'max_level': item.max_level,
             'current_level': current_level,
             'next_level_price': next_level_price,
-            'can_upgrade': current_level < item.max_level and next_level_price is not None,
+            'can_upgrade': can_upgrade,
+            'requires_extra_button': requires_extra_button and extra_button_level == 0 and current_level == 0,
+            'is_unpurchased': is_unpurchased,
         })
     
     return JsonResponse({'items': shop_data})
@@ -327,6 +352,17 @@ def api_purchase_item(request):
         
         shop_item = ShopItem.objects.get(id=item_id)
         profile = get_or_create_profile(request.user)
+        
+        # 對於自動點擊器，檢查前置條件（需要額外點擊按鈕）
+        if shop_item.item_type == 'auto_clicker':
+            extra_button_item = ShopItem.objects.filter(item_type='extra_button').first()
+            if extra_button_item:
+                extra_button_purchase = PlayerPurchase.objects.filter(
+                    user=request.user,
+                    shop_item=extra_button_item
+                ).first()
+                if not extra_button_purchase or extra_button_purchase.level == 0:
+                    return JsonResponse({'error': '需要先購買「額外點擊按鈕」才能購買自動點擊器'}, status=400)
         
         # 獲取當前購買記錄
         purchase = PlayerPurchase.objects.filter(user=request.user, shop_item=shop_item).first()
@@ -358,11 +394,31 @@ def api_purchase_item(request):
                     level=1,
                     price_paid=price
                 )
+            
+            # 如果購買的是額外點擊按鈕，自動附加1等級的自動點擊器
+            if shop_item.item_type == 'extra_button' and purchase.level == 1:
+                # 檢查是否已有自動點擊器
+                auto_clicker_item = ShopItem.objects.filter(item_type='auto_clicker').first()
+                if auto_clicker_item:
+                    auto_clicker_purchase = PlayerPurchase.objects.filter(
+                        user=request.user,
+                        shop_item=auto_clicker_item
+                    ).first()
+                    
+                    # 如果沒有自動點擊器，創建1等級的自動點擊器
+                    if not auto_clicker_purchase:
+                        PlayerPurchase.objects.create(
+                            user=request.user,
+                            shop_item=auto_clicker_item,
+                            level=1,
+                            price_paid=0  # 免費附加
+                        )
         
         return JsonResponse({
             'success': True,
             'new_level': purchase.level,
             'coins_remaining': profile.coins,
+            'item_name': shop_item.name,
         })
     except ShopItem.DoesNotExist:
         return JsonResponse({'error': '物品不存在'}, status=404)
