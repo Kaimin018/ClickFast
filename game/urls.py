@@ -12,4 +12,6 @@ urlpatterns = [
     path('api/achievements/', views.api_get_achievements, name='api_achievements'),
     path('api/history/', views.api_get_game_history, name='api_history'),
     path('api/update-badges/', views.api_update_badges, name='api_update_badges'),
+    path('api/rollback-shop-level/', views.api_rollback_shop_level, name='api_rollback_shop_level'),
+    path('api/rollback-all-shop-items/', views.api_rollback_all_shop_items, name='api_rollback_all_shop_items'),
 ]

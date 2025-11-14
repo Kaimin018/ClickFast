@@ -477,3 +477,111 @@ def api_update_badges(request):
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_rollback_shop_level(request):
+    """回溯商店等級（僅限超級帳號）"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': '未登錄'}, status=401)
+    
+    # 檢查是否為超級帳號
+    if request.user.username != 'super_test':
+        return JsonResponse({'error': '無權限訪問'}, status=403)
+    
+    try:
+        data = json.loads(request.body)
+        item_id = int(data.get('item_id'))
+        target_level = int(data.get('target_level', 0))
+        
+        shop_item = ShopItem.objects.get(id=item_id)
+        profile = get_or_create_profile(request.user)
+        
+        # 驗證目標等級範圍
+        if target_level < 0 or target_level > shop_item.max_level:
+            return JsonResponse({'error': f'目標等級必須在 0 到 {shop_item.max_level} 之間'}, status=400)
+        
+        # 獲取當前購買記錄
+        purchase = PlayerPurchase.objects.filter(user=request.user, shop_item=shop_item).first()
+        current_level = purchase.level if purchase else 0
+        
+        if target_level == current_level:
+            return JsonResponse({'error': '目標等級與當前等級相同'}, status=400)
+        
+        with transaction.atomic():
+            if target_level == 0:
+                # 如果回溯到等級 0，刪除購買記錄
+                if purchase:
+                    purchase.delete()
+            else:
+                # 更新購買記錄的等級
+                if purchase:
+                    purchase.level = target_level
+                    # 計算到目標等級的總價格（用於記錄）
+                    total_price = 0
+                    for level in range(target_level):
+                        total_price += shop_item.base_price * (level + 1)
+                    purchase.price_paid = total_price
+                    purchase.save()
+                else:
+                    # 如果沒有購買記錄但目標等級 > 0，創建新記錄
+                    total_price = 0
+                    for level in range(target_level):
+                        total_price += shop_item.base_price * (level + 1)
+                    purchase = PlayerPurchase.objects.create(
+                        user=request.user,
+                        shop_item=shop_item,
+                        level=target_level,
+                        price_paid=total_price
+                    )
+        
+        return JsonResponse({
+            'success': True,
+            'item_id': item_id,
+            'item_name': shop_item.name,
+            'old_level': current_level,
+            'new_level': target_level,
+            'message': f'已將 {shop_item.name} 從等級 {current_level} 回溯到等級 {target_level}'
+        })
+    except ShopItem.DoesNotExist:
+        return JsonResponse({'error': '物品不存在'}, status=404)
+    except ValueError as e:
+        return JsonResponse({'error': '無效的參數值'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def api_rollback_all_shop_items(request):
+    """批量回溯所有商店物品到初始狀態（僅限超級帳號）"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': '未登錄'}, status=401)
+    
+    # 檢查是否為超級帳號
+    if request.user.username != 'super_test':
+        return JsonResponse({'error': '無權限訪問'}, status=403)
+    
+    try:
+        with transaction.atomic():
+            # 獲取所有購買記錄
+            purchases = PlayerPurchase.objects.filter(user=request.user)
+            rolled_back_items = []
+            
+            for purchase in purchases:
+                if purchase.level > 0:
+                    rolled_back_items.append({
+                        'item_name': purchase.shop_item.name,
+                        'old_level': purchase.level
+                    })
+                    purchase.delete()
+            
+            return JsonResponse({
+                'success': True,
+                'rolled_back_count': len(rolled_back_items),
+                'items': rolled_back_items,
+                'message': f'已將 {len(rolled_back_items)} 個商店物品回溯到初始狀態'
+            })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

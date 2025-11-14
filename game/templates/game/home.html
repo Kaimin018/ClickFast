@@ -704,6 +704,95 @@
       overflow-y: auto;
     }
 
+    /* 購買成功通知 Toast */
+    .purchase-toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      min-width: 300px;
+      max-width: 400px;
+      transform: translateX(500px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      pointer-events: none;
+    }
+
+    .purchase-toast.show {
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .purchase-toast-icon {
+      font-size: 32px;
+      line-height: 1;
+      animation: bounce 0.6s ease-in-out;
+    }
+
+    @keyframes bounce {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.2);
+      }
+    }
+
+    .purchase-toast-content {
+      flex: 1;
+    }
+
+    .purchase-toast-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .purchase-toast-message {
+      font-size: 14px;
+      opacity: 0.95;
+    }
+
+    .purchase-toast-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+
+    .purchase-toast-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg);
+    }
+
+    @media (max-width: 768px) {
+      .purchase-toast {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        max-width: none;
+      }
+    }
+
     /* 歷史記錄模態框使用更大的寬度 */
     #historyModal .modal-content {
       max-width: 750px;
@@ -775,11 +864,22 @@
       background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
       padding: 15px;
       border-radius: 10px;
-      margin: 15px auto;
+      margin: 15px 0;
       border: 1px solid #d0d0d0;
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      width: 50%;
-      max-width: 400px;
+      width: 80%;
+      max-width: 800px;
+    }
+
+    .super-account-controls .controls-row {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+    }
+
+    .super-account-controls .controls-row > div {
+      flex: 1;
+      min-width: 0;
     }
 
     .super-account-controls h3 {
@@ -881,6 +981,115 @@
       white-space: nowrap;
     }
 
+    .super-account-controls .shop-rollback-control {
+      padding-left: 20px;
+      border-left: 2px solid #d0d0d0;
+    }
+
+    .super-account-controls .time-control h4,
+    .super-account-controls .shop-rollback-control h4 {
+      margin: 0 0 15px 0;
+      color: #666666;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .super-account-controls .shop-item-select {
+      margin-bottom: 15px;
+    }
+
+    .super-account-controls .shop-item-select label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #555555;
+      font-size: 14px;
+    }
+
+    .super-account-controls .shop-item-select select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 2px solid #d0d0d0;
+      border-radius: 6px;
+      font-size: 14px;
+      background: white;
+      color: #333;
+      cursor: pointer;
+      transition: border-color 0.3s;
+    }
+
+    .super-account-controls .shop-item-select select:hover {
+      border-color: #667eea;
+    }
+
+    .super-account-controls .shop-item-select select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .super-account-controls .level-control {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .super-account-controls .level-control-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .super-account-controls .level-value-display {
+      font-size: 14px;
+      font-weight: bold;
+      color: #667eea;
+      background: white;
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid #667eea;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .super-account-controls .rollback-button {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+
+    .super-account-controls .rollback-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .super-account-controls .rollback-button:active {
+      transform: translateY(0);
+    }
+
+    .super-account-controls .rollback-button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .super-account-controls .current-level-info {
+      font-size: 12px;
+      color: #888;
+      margin-top: 5px;
+      text-align: center;
+    }
+
     @media (max-width: 768px) {
       .main-content {
         grid-template-columns: 1fr;
@@ -889,6 +1098,22 @@
       .header {
         flex-direction: column;
         text-align: center;
+      }
+
+      .super-account-controls {
+        width: 95%;
+      }
+
+      .super-account-controls .controls-row {
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .super-account-controls .shop-rollback-control {
+        padding-left: 0;
+        border-left: none;
+        padding-top: 15px;
+        border-top: 2px solid #d0d0d0;
       }
 
       .username-display {
@@ -984,19 +1209,32 @@
             <!-- 超級帳號時間調整欄位 -->
             <div class="super-account-controls" id="superAccountControls" style="display: none;">
               <h3>👑 超級帳號控制面板</h3>
-              <div class="time-control">
-                <div class="time-control-header">
-                  <label for="superTimeInput">遊戲時長：</label>
-                  <div class="time-value-display" id="superTimeDisplay">10 秒</div>
+              <div class="controls-row">
+                <div class="time-control">
+                  <h4>⏱️ 遊戲時長</h4>
+                  <div class="time-control-header">
+                    <label for="superTimeInput">遊戲時長：</label>
+                    <div class="time-value-display" id="superTimeDisplay">5 秒</div>
+                  </div>
+                  <div class="range-container">
+                    <span class="range-label">5(秒)</span>
+                    <input type="range" id="superTimeInput" min="5" max="30" step="1" value="5">
+                    <span class="range-label">30(秒)</span>
+                  </div>
                 </div>
-                <div class="range-container">
-                  <span class="range-label">5(秒)</span>
-                  <input type="range" id="superTimeInput" min="5" max="30" step="1" value="10">
-                  <span class="range-label">30(秒)</span>
+                <!-- 商店等級回溯控制 -->
+                <div class="shop-rollback-control">
+                  <h4>🔄 商店等級回溯</h4>
+                  <p style="font-size: 12px; color: #888; margin-bottom: 15px; text-align: center;">
+                    將所有商店物品回溯到初始狀態（等級 0）
+                  </p>
+                  <button class="rollback-button" id="rollbackAllButton" onclick="rollbackAllShopItems()">
+                    🔄 全部回溯
+                  </button>
                 </div>
               </div>
             </div>
-            <div class="timer" id="timerDisplay">10.0 秒</div>
+            <div class="timer" id="timerDisplay">5.0 秒</div>
             <div class="clicks-display" id="clicksDisplay">0 次點擊</div>
             <div class="game-controls">
               <button class="btn btn-primary" id="startButton" onclick="startGame()">開始遊戲</button>
@@ -1056,6 +1294,16 @@
     </div>
   </div>
 
+  <!-- 購買成功通知 Toast -->
+  <div class="purchase-toast" id="purchaseToast">
+    <div class="purchase-toast-icon">✅</div>
+    <div class="purchase-toast-content">
+      <div class="purchase-toast-title">購買成功！</div>
+      <div class="purchase-toast-message" id="purchaseToastMessage">物品已成功購買</div>
+    </div>
+    <button class="purchase-toast-close" onclick="closePurchaseToastAndProcessNext()">&times;</button>
+  </div>
+
   <!-- 帳號介面模態框（僅玩家資料） -->
   <div class="modal" id="accountModal">
     <div class="modal-content">
@@ -1107,9 +1355,9 @@
     // 遊戲狀態
     let gameState = {
       isPlaying: false,
-      timeRemaining: 10.0,
+      timeRemaining: 5.0,
       clicks: 0,
-      gameDuration: 10.0,
+      gameDuration: 5.0,
       timerInterval: null,
       autoClickerIntervals: [], // 改為數組，存儲每個自動按鈕的定時器
       userProfile: null,
@@ -1185,11 +1433,17 @@
       const superAccountControls = document.getElementById('superAccountControls');
       if (gameState.userProfile && gameState.userProfile.username === 'super_test') {
         superAccountControls.style.display = 'block';
-        // 設置當前遊戲時長（限制在5-30秒範圍內）
+        // 設置當前遊戲時長（超級帳號使用獨立設置，不受時間延長購買影響）
         const timeInput = document.getElementById('superTimeInput');
         const timeDisplay = document.getElementById('superTimeDisplay');
         if (timeInput && timeDisplay) {
-          const currentTime = Math.max(5, Math.min(30, Math.round(gameState.gameDuration)));
+          // 超級帳號控制面板始終使用預設值 5 秒，不受時間延長購買影響
+          // 如果滑桿已經有有效值（5-30），保持它；否則設置為預設值 5
+          let currentTime = 5;
+          const existingValue = parseInt(timeInput.value);
+          if (existingValue >= 5 && existingValue <= 30) {
+            currentTime = existingValue;
+          }
           timeInput.value = currentTime;
           timeDisplay.textContent = currentTime + ' 秒';
           
@@ -1206,8 +1460,46 @@
             }
           });
         }
+        
+        // 商店等級回溯功能已簡化，無需初始化
       } else {
         superAccountControls.style.display = 'none';
+      }
+    }
+
+    // 批量回溯所有商店物品到初始狀態
+    async function rollbackAllShopItems() {
+      const rollbackAllButton = document.getElementById('rollbackAllButton');
+      
+      if (!confirm('確定要將所有商店物品回溯到初始狀態（等級 0）嗎？')) {
+        return;
+      }
+      
+      // 禁用按鈕防止重複點擊
+      rollbackAllButton.disabled = true;
+      rollbackAllButton.textContent = '回溯中...';
+      
+      try {
+        const result = await apiCall('/api/rollback-all-shop-items/', 'POST');
+        
+        if (result.success) {
+          // 顯示成功訊息
+          if (result.rolled_back_count > 0) {
+            alert(result.message);
+          } else {
+            alert('沒有需要回溯的商店物品');
+          }
+          
+          // 重新加載資料
+          await loadProfile();
+          await loadShop();
+        }
+      } catch (error) {
+        // 錯誤已在 apiCall 中處理
+      } finally {
+        // 恢復按鈕狀態
+        rollbackAllButton.disabled = false;
+        rollbackAllButton.textContent = '🔄 全部回溯';
       }
     }
 
@@ -1256,9 +1548,9 @@
         // 重置遊戲狀態
         gameState = {
           isPlaying: false,
-          timeRemaining: 10.0,
+          timeRemaining: 5.0,
           clicks: 0,
-          gameDuration: 10.0,
+          gameDuration: 5.0,
           timerInterval: null,
           autoClickerIntervals: [],
           userProfile: null,
@@ -1285,9 +1577,9 @@
         // 即使 API 調用失敗，也執行登出操作
         gameState = {
           isPlaying: false,
-          timeRemaining: 10.0,
+          timeRemaining: 5.0,
           clicks: 0,
-          gameDuration: 10.0,
+          gameDuration: 5.0,
           timerInterval: null,
           autoClickerIntervals: [],
           userProfile: null,
@@ -1371,14 +1663,18 @@
     function updateGameUpgrades() {
       // 更新遊戲時長
       if (gameState.purchases.time_extension) {
-        gameState.gameDuration = 10.0 + gameState.purchases.time_extension.effect_value;
+        gameState.gameDuration = 5.0 + gameState.purchases.time_extension.effect_value;
+      } else {
+        gameState.gameDuration = 5.0;
       }
 
       // 更新額外按鈕
-      if (gameState.purchases.extra_button) {
+      // 先重置為0，然後根據購買記錄設置
+      gameState.extraButtons = 0;
+      if (gameState.purchases.extra_button && gameState.purchases.extra_button.level > 0) {
         gameState.extraButtons = gameState.purchases.extra_button.effect_value;
-        updateClickButtons();
       }
+      updateClickButtons();
 
       // 更新自動點擊器
       // 根據等級計算點擊頻率：
@@ -1417,13 +1713,22 @@
       }
 
       // 更新超級帳號控制面板的時間顯示
+      // 注意：超級帳號的時間設置不應被時間延長購買影響
+      // 只有在滑桿沒有被手動設置時才更新
       if (gameState.userProfile && gameState.userProfile.username === 'super_test') {
         const superTimeInput = document.getElementById('superTimeInput');
         const superTimeDisplay = document.getElementById('superTimeDisplay');
         if (superTimeInput && superTimeDisplay) {
-          const currentTime = Math.max(5, Math.min(30, Math.round(gameState.gameDuration)));
-          superTimeInput.value = currentTime;
-          superTimeDisplay.textContent = currentTime + ' 秒';
+          // 保持當前滑桿的值，不根據 gameDuration 更新
+          // 這樣可以避免時間延長購買影響超級帳號的手動設置
+          const currentTime = parseInt(superTimeInput.value) || 5;
+          if (currentTime >= 5 && currentTime <= 30) {
+            superTimeDisplay.textContent = currentTime + ' 秒';
+          } else {
+            // 如果值不在合理範圍內，重置為 5
+            superTimeInput.value = 5;
+            superTimeDisplay.textContent = '5 秒';
+          }
         }
       }
     }
@@ -1724,11 +2029,94 @@
         if (result.success) {
           await loadProfile();
           await loadShop();
-          alert('購買成功！');
+          // 顯示美化的購買成功通知
+          showPurchaseToast(result.new_level);
         }
       } catch (error) {
         // 錯誤已在 apiCall 中處理
       }
+    }
+
+    // 購買通知隊列
+    let purchaseToastQueue = [];
+    let purchaseToastTimer = null;
+    let isPurchaseToastShowing = false;
+
+    // 顯示購買成功通知（使用隊列系統）
+    function showPurchaseToast(newLevel) {
+      // 將通知加入隊列
+      purchaseToastQueue.push(newLevel);
+      
+      // 如果當前沒有通知在顯示，立即顯示下一個
+      if (!isPurchaseToastShowing) {
+        processPurchaseToastQueue();
+      }
+    }
+
+    // 處理購買通知隊列
+    function processPurchaseToastQueue() {
+      // 如果隊列為空，重置狀態
+      if (purchaseToastQueue.length === 0) {
+        isPurchaseToastShowing = false;
+        return;
+      }
+
+      // 標記為正在顯示
+      isPurchaseToastShowing = true;
+      
+      // 從隊列中取出第一個通知
+      const newLevel = purchaseToastQueue.shift();
+      const toast = document.getElementById('purchaseToast');
+      const messageEl = document.getElementById('purchaseToastMessage');
+      
+      // 設置通知內容
+      if (newLevel) {
+        messageEl.textContent = `已升級到等級 ${newLevel}`;
+      } else {
+        messageEl.textContent = '物品已成功購買';
+      }
+      
+      // 顯示通知
+      toast.classList.add('show');
+      
+      // 清除之前的定時器（如果存在）
+      if (purchaseToastTimer) {
+        clearTimeout(purchaseToastTimer);
+      }
+      
+      // 設置自動關閉時間（根據隊列長度調整，如果有更多通知等待，顯示時間稍短）
+      const displayTime = purchaseToastQueue.length > 0 ? 2000 : 3000;
+      purchaseToastTimer = setTimeout(() => {
+        closePurchaseToast();
+        // 關閉後處理下一個通知（延遲一點讓動畫完成）
+        setTimeout(() => {
+          processPurchaseToastQueue();
+        }, 400);
+      }, displayTime);
+    }
+
+    // 關閉購買成功通知
+    function closePurchaseToast() {
+      const toast = document.getElementById('purchaseToast');
+      toast.classList.remove('show');
+      
+      // 清除定時器
+      if (purchaseToastTimer) {
+        clearTimeout(purchaseToastTimer);
+        purchaseToastTimer = null;
+      }
+      
+      // 重置顯示狀態，讓隊列繼續處理
+      isPurchaseToastShowing = false;
+    }
+
+    // 手動關閉並處理下一個通知
+    function closePurchaseToastAndProcessNext() {
+      closePurchaseToast();
+      // 延遲一點讓關閉動畫完成，然後處理下一個通知
+      setTimeout(() => {
+        processPurchaseToastQueue();
+      }, 400);
     }
 
     // 打開商店
