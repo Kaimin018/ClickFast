@@ -70,9 +70,26 @@
       top: 15px;
       right: 15px;
       display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 5px;
+      z-index: 10;
+    }
+
+    .badges-label {
+      font-size: 11px;
+      color: #666;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 2px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .badges-slots-container {
+      display: flex;
       gap: 8px;
       align-items: center;
-      z-index: 10;
     }
 
     .badge-slot {
@@ -1249,6 +1266,11 @@
         gap: 4px;
       }
 
+      .badges-label {
+        font-size: 10px;
+        padding: 2px 6px;
+      }
+
       .badge-slot {
         width: 36px;
         height: 36px;
@@ -1503,14 +1525,17 @@
           <div class="game-container">
             <!-- 成就徽章顯示區域（右上角） -->
             <div class="badges-container-game">
-              <div class="badge-slot" id="badgeSlot1" onclick="selectBadge(1)" title="點擊選擇徽章">
-                <span class="badge-icon" id="badgeIcon1">-</span>
-              </div>
-              <div class="badge-slot" id="badgeSlot2" onclick="selectBadge(2)" title="點擊選擇徽章">
-                <span class="badge-icon" id="badgeIcon2">-</span>
-              </div>
-              <div class="badge-slot" id="badgeSlot3" onclick="selectBadge(3)" title="點擊選擇徽章">
-                <span class="badge-icon" id="badgeIcon3">-</span>
+              <div class="badges-label" title="點擊下方徽章槽位可選擇要顯示的成就徽章">🏅 徽章系統</div>
+              <div class="badges-slots-container">
+                <div class="badge-slot" id="badgeSlot1" onclick="selectBadge(1)" title="點擊選擇徽章">
+                  <span class="badge-icon" id="badgeIcon1">-</span>
+                </div>
+                <div class="badge-slot" id="badgeSlot2" onclick="selectBadge(2)" title="點擊選擇徽章">
+                  <span class="badge-icon" id="badgeIcon2">-</span>
+                </div>
+                <div class="badge-slot" id="badgeSlot3" onclick="selectBadge(3)" title="點擊選擇徽章">
+                  <span class="badge-icon" id="badgeIcon3">-</span>
+                </div>
               </div>
             </div>
             <h2>點擊遊戲</h2>
@@ -1797,10 +1822,16 @@
           // 檢查是否為超級帳號
           checkSuperAccount();
           
-          // 短暫延遲後隱藏載入視窗，讓用戶看到成功訊息
+          // 所有資料載入完成，更新載入訊息
+          if (document.getElementById('loadingModal').classList.contains('active')) {
+            document.getElementById('loadingText').textContent = '載入完成！';
+            document.getElementById('loadingDetails').textContent = '歡迎回來，開始遊戲吧！';
+          }
+          
+          // 短暫延遲後隱藏載入視窗，讓用戶看到完成訊息
           setTimeout(() => {
             hideLoadingModal();
-          }, 500);
+          }, 800);
         }
       } catch (error) {
         // 隱藏載入視窗（錯誤已在 apiCall 中處理並顯示 alert）
@@ -2054,7 +2085,8 @@
         }
         
         // 優化：並行載入所有資料，減少等待時間
-        Promise.all([
+        // 等待所有資料載入完成，確保載入視窗在資料完全載入後才關閉
+        await Promise.all([
           loadShop(),
           loadAchievements(),
           loadHistory()
@@ -2083,14 +2115,21 @@
                 // 更新載入訊息
                 if (document.getElementById('loadingModal').classList.contains('active')) {
                   document.getElementById('loadingText').textContent = '重新登入成功！';
-                  document.getElementById('loadingDetails').textContent = '正在載入遊戲資料...';
+                  document.getElementById('loadingDetails').textContent = '正在載入商店、成就和歷史記錄...';
                 }
                 // 重新登入成功，重新載入資料（跳過自動重新登入，避免無限遞迴）
                 await loadProfile(true);
+                
+                // 所有資料載入完成，更新載入訊息
+                if (document.getElementById('loadingModal').classList.contains('active')) {
+                  document.getElementById('loadingText').textContent = '載入完成！';
+                  document.getElementById('loadingDetails').textContent = '歡迎回來，開始遊戲吧！';
+                }
+                
                 // 隱藏載入視窗
                 setTimeout(() => {
                   hideLoadingModal();
-                }, 500);
+                }, 800);
                 return;
               }
             } catch (loginError) {
