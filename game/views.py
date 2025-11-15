@@ -71,15 +71,15 @@ def api_login_or_register(request):
         # 嘗試獲取用戶，如果不存在則創建
         user, created = User.objects.get_or_create(username=username)
         if created:
-            # 新用戶：設置不可用密碼
+            # 新用戶：設置不可用密碼（在創建時設置，避免額外的 save）
             user.set_unusable_password()
-            user.save()
+            user.save(update_fields=['password'])  # 只更新 password 欄位
         else:
             # 已存在的用戶：如果密碼為空，設置為不可用
             # 這樣可以確保超級帳號等無密碼用戶能正常登錄
             if not user.password:
                 user.set_unusable_password()
-                user.save()
+                user.save(update_fields=['password'])  # 只更新 password 欄位
         
         # 登錄用戶（使用 backend 參數確保可以登錄無密碼用戶）
         # 對於無密碼用戶，必須明確指定 backend
@@ -130,6 +130,7 @@ def api_get_profile(request):
     
     profile = get_or_create_profile(request.user)
     
+    # 優化：一次性查詢所有需要的資料，減少資料庫查詢次數
     # 獲取玩家購買記錄（使用 select_related 優化，避免 N+1 查詢）
     purchases = PlayerPurchase.objects.filter(user=request.user).select_related('shop_item')
     player_items = {}
@@ -151,15 +152,17 @@ def api_get_profile(request):
         for ach in achievements
     ]
     
-    # 獲取用戶選擇的徽章信息（優化：一次性查詢所有需要的成就和解鎖狀態）
+    # 獲取用戶選擇的徽章信息（優化：合併查詢，減少資料庫往返）
     badge_ids = [profile.badge_1_id, profile.badge_2_id, profile.badge_3_id]
     valid_badge_ids = [bid for bid in badge_ids if bid is not None]
     
-    # 一次性查詢所有需要的成就
+    # 一次性查詢所有需要的成就和解鎖狀態
     badge_achievements = {}
     if valid_badge_ids:
+        # 使用 values 只查詢需要的欄位，減少資料傳輸
         achievements_dict = {
-            ach.id: ach for ach in Achievement.objects.filter(id__in=valid_badge_ids)
+            ach['id']: ach for ach in Achievement.objects.filter(id__in=valid_badge_ids)
+            .values('id', 'icon', 'name')
         }
         # 一次性查詢所有已解鎖的成就ID
         unlocked_achievement_ids = set(
@@ -171,9 +174,9 @@ def api_get_profile(request):
             if ach_id in achievements_dict and ach_id in unlocked_achievement_ids:
                 ach = achievements_dict[ach_id]
                 badge_achievements[ach_id] = {
-                    'id': ach.id,
-                    'icon': ach.icon,
-                    'name': ach.name,
+                    'id': ach['id'],
+                    'icon': ach['icon'],
+                    'name': ach['name'],
                 }
     
     # 構建徽章列表
@@ -237,17 +240,19 @@ def api_submit_game(request):
                 return JsonResponse({'error': '無效的遊戲時長格式'}, status=400)
         
         with transaction.atomic():
-            # 使用 select_for_update 鎖定資料行，確保資料一致性
-            profile = PlayerProfile.objects.select_for_update().get_or_create(
-                user=request.user,
-                defaults={
-                    'coins': 0,
-                    'total_clicks': 0,
-                    'best_clicks_per_round': 0,
-                    'total_games_played': 0,
-                    'battle_wins': 0,
-                }
-            )[0]
+            # 優化：先嘗試獲取，避免不必要的鎖定和 get_or_create 的額外查詢
+            try:
+                profile = PlayerProfile.objects.select_for_update().get(user=request.user)
+            except PlayerProfile.DoesNotExist:
+                # 如果不存在，創建新的 profile
+                profile = PlayerProfile.objects.create(
+                    user=request.user,
+                    coins=0,
+                    total_clicks=0,
+                    best_clicks_per_round=0,
+                    total_games_played=0,
+                    battle_wins=0,
+                )
             
             # 計算金幣
             # 基礎時間（10秒）內：每次點擊1金幣
@@ -588,7 +593,12 @@ def api_purchase_item(request):
             price = shop_item.base_price * (current_level + 1)
             
             if profile.coins < price:
-                return JsonResponse({'error': '金幣不足'}, status=400)
+                return JsonResponse({
+                    'error': '金幣不足',
+                    'current_coins': profile.coins,
+                    'required_coins': price,
+                    'shortage': price - profile.coins
+                }, status=400)
             
             # 扣除金幣
             profile.coins -= price

@@ -28,9 +28,16 @@ game/
 │       ├── __init__.py
 │       ├── init_game_data.py  # 初始化遊戲資料命令
 │       └── create_super_account.py  # 創建超級測試帳號命令
-└── Test_Cases/              # 測試用例目錄
+└── Test_Cases/              # 測試用例目錄（按遊戲系統/模組分類）
     ├── __init__.py
-    └── test_case_01_game_flow.py  # 遊戲流程測試用例
+    ├── 01_Authentication_System/  # 認證系統測試
+    ├── 02_Core_Gameplay/          # 核心遊戲玩法測試
+    ├── 03_Shop_System/            # 商店系統測試
+    ├── 04_Achievement_System/     # 成就系統測試
+    ├── 05_UI_System/              # UI 系統測試
+    ├── 06_Frontend_Responsive/    # 前端響應式設計測試
+    ├── 07_Flow_And_E2E_Tests/     # 流程與端到端測試
+    └── 08_Technical_Checks/       # 技術與非功能性測試
 ```
 
 ### 主要文件說明
@@ -206,16 +213,28 @@ assets/
 
 ## 測試結構
 
-測試用例位於 `game/Test_Cases/` 目錄：
+測試用例位於 `game/Test_Cases/` 目錄，按遊戲系統/模組分類：
 
-- `test_case_01_game_flow.py`: 包含 12 個遊戲流程測試用例
-  - 用戶登錄和註冊
-  - 獲取用戶資料
-  - 提交遊戲結果
-  - 商店功能
-  - 成就系統
-  - 歷史記錄
-  - 完整遊戲流程
+### 測試模組結構
+- `01_Authentication_System/` - 認證系統測試（登錄、註冊、Session 管理）
+- `02_Core_Gameplay/` - 核心遊戲玩法測試（點擊、計時、金幣計算）
+- `03_Shop_System/` - 商店系統測試（物品列表、購買功能）
+- `04_Achievement_System/` - 成就系統測試（成就列表、解鎖機制）
+- `05_UI_System/` - UI 系統測試（頁面載入、模態框操作）
+- `06_Frontend_Responsive/` - 前端響應式設計測試（手機版、觸控優化）
+- `07_Flow_And_E2E_Tests/` - 流程與端到端測試（完整遊戲流程）
+- `08_Technical_Checks/` - 技術與非功能性測試（性能、驗證邏輯）
+
+### 運行測試
+```bash
+# 運行所有測試
+python manage.py test game.Test_Cases --keepdb
+
+# 運行特定模組
+python manage.py test game.Test_Cases.01_Authentication_System --keepdb
+```
+
+詳細說明請參考 `game/Test_Cases/TC_README.md`
 
 ## 部署配置
 
@@ -234,7 +253,12 @@ assets/
   - 可選參數：`--username`（預設：super_test）、`--coins`（預設：1000000）
 
 ### 測試命令
-- `python manage.py test game.Test_Cases.test_case_01_game_flow`: 運行遊戲流程測試
+- `python manage.py test game.Test_Cases`: 運行所有測試
+- `python manage.py test game.Test_Cases.01_Authentication_System`: 運行認證系統測試
+- `python manage.py test game.Test_Cases.02_Core_Gameplay`: 運行核心遊戲玩法測試
+- `python manage.py test game.Test_Cases.07_Flow_And_E2E_Tests`: 運行端到端測試
+
+詳細測試說明請參考 `game/Test_Cases/TC_README.md`
 
 ## 依賴套件
 

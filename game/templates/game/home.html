@@ -830,6 +830,207 @@
       pointer-events: none;
     }
 
+    /* 錯誤提示 Toast */
+    .error-toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #f56565 0%, #c53030 100%);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(245, 101, 101, 0.4);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      min-width: 300px;
+      max-width: 400px;
+      transform: translateX(500px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      pointer-events: none;
+    }
+
+    .error-toast.show {
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .error-toast-icon {
+      font-size: 32px;
+      line-height: 1;
+      animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% {
+        transform: translateX(0);
+      }
+      25% {
+        transform: translateX(-5px);
+      }
+      75% {
+        transform: translateX(5px);
+      }
+    }
+
+    .error-toast-content {
+      flex: 1;
+    }
+
+    .error-toast-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .error-toast-message {
+      font-size: 14px;
+      opacity: 0.95;
+      line-height: 1.5;
+    }
+
+    .error-toast-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+
+    .error-toast-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg);
+    }
+
+    @media (max-width: 768px) {
+      .error-toast {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        max-width: none;
+      }
+    }
+
+    /* 遊戲結算 Toast */
+    .game-result-toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(72, 187, 120, 0.4);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      min-width: 300px;
+      max-width: 400px;
+      transform: translateX(500px);
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      pointer-events: none;
+    }
+
+    .game-result-toast.show {
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .game-result-toast-icon {
+      font-size: 32px;
+      line-height: 1;
+      animation: bounce 0.6s ease-in-out;
+    }
+
+    .game-result-toast-content {
+      flex: 1;
+    }
+
+    .game-result-toast-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .game-result-toast-message {
+      font-size: 14px;
+      opacity: 0.95;
+      line-height: 1.8;
+    }
+
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+
+    .result-label {
+      opacity: 0.9;
+    }
+
+    .result-value {
+      font-weight: bold;
+      font-size: 16px;
+    }
+
+    .result-value.coins-value {
+      color: #ffd700;
+      font-size: 18px;
+    }
+
+    .result-loading {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .game-result-toast-close {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s;
+      flex-shrink: 0;
+    }
+
+    .game-result-toast-close:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: rotate(90deg);
+    }
+
+    @media (max-width: 768px) {
+      .game-result-toast {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        max-width: none;
+      }
+    }
+
     .purchase-toast.show {
       transform: translateX(0);
       opacity: 1;
@@ -1639,6 +1840,38 @@
     <button class="purchase-toast-close" onclick="closePurchaseToastAndProcessNext()">&times;</button>
   </div>
 
+  <!-- 錯誤提示 Toast -->
+  <div class="error-toast" id="errorToast">
+    <div class="error-toast-icon">⚠️</div>
+    <div class="error-toast-content">
+      <div class="error-toast-title" id="errorToastTitle">錯誤</div>
+      <div class="error-toast-message" id="errorToastMessage">發生錯誤</div>
+    </div>
+    <button class="error-toast-close" onclick="closeErrorToast()">&times;</button>
+  </div>
+
+  <!-- 遊戲結算 Toast -->
+  <div class="game-result-toast" id="gameResultToast">
+    <div class="game-result-toast-icon">🎮</div>
+    <div class="game-result-toast-content">
+      <div class="game-result-toast-title">遊戲結束！</div>
+      <div class="game-result-toast-message" id="gameResultMessage">
+        <div class="result-item">
+          <span class="result-label">點擊數：</span>
+          <span class="result-value" id="resultClicks">0</span>
+        </div>
+        <div class="result-item">
+          <span class="result-label">獲得金幣：</span>
+          <span class="result-value coins-value" id="resultCoins">+0 💰</span>
+        </div>
+        <div class="result-loading" id="resultLoading" style="display: none;">
+          <span style="opacity: 0.8; font-size: 12px;">正在儲存...</span>
+        </div>
+      </div>
+    </div>
+    <button class="game-result-toast-close" onclick="closeGameResultToast()">&times;</button>
+  </div>
+
   <!-- 帳號介面模態框（僅玩家資料） -->
   <div class="modal" id="accountModal">
     <div class="modal-content">
@@ -1746,7 +1979,7 @@
     };
 
     // API 調用函數
-    async function apiCall(url, method = 'GET', data = null, silent = false) {
+    async function apiCall(url, method = 'GET', data = null, silent = false, useToast = false) {
       const options = {
         method: method,
         headers: {
@@ -1765,14 +1998,40 @@
         if (response.ok) {
           return result;
         } else {
-          throw new Error(result.error || '請求失敗');
+          // 將完整的錯誤資訊傳遞，包括額外的資料
+          const error = new Error(result.error || '請求失敗');
+          error.result = result; // 保存完整的回應結果
+          throw error;
         }
       } catch (error) {
         console.error('API Error:', error);
         
-        // 如果是靜默模式，不顯示 alert
-        // 或者錯誤訊息是「未登錄」（這是正常情況，不需要提示）
-        if (!silent && !(error.message && error.message.includes('未登錄'))) {
+        // 如果是靜默模式，不顯示任何提示
+        if (silent) {
+          throw error;
+        }
+        
+        // 如果是「未登錄」錯誤，不顯示提示（這是正常情況）
+        if (error.message && error.message.includes('未登錄')) {
+          throw error;
+        }
+        
+        // 如果是「金幣不足」錯誤且使用 Toast，顯示美化的錯誤提示
+        if (useToast && error.message && error.message.includes('金幣不足') && error.result) {
+          showErrorToast('金幣不足', error.result);
+          throw error;
+        }
+        
+        // 其他錯誤：使用 Toast 或 alert
+        if (useToast) {
+          let errorMessage = error.message;
+          if (errorMessage.includes('timeout') || errorMessage.includes('connection') || errorMessage.includes('pooler.supabase.com')) {
+            errorMessage = '無法連接到資料庫伺服器，請稍後再試。';
+          } else if (errorMessage.includes('500') || errorMessage.includes('Internal Server Error')) {
+            errorMessage = '伺服器發生錯誤，請稍後再試。';
+          }
+          showErrorToast('錯誤', errorMessage);
+        } else {
           // 檢測資料庫連接錯誤，顯示更友好的錯誤訊息
           let errorMessage = error.message;
           if (errorMessage.includes('timeout') || errorMessage.includes('connection') || errorMessage.includes('pooler.supabase.com')) {
@@ -2484,6 +2743,22 @@
       document.getElementById('clicksDisplay').textContent = Math.floor(gameState.clicks) + ' 次點擊';
     }
 
+    // 計算金幣（與後端邏輯一致）
+    function calculateCoinsEarned(clicks, gameDuration) {
+      const baseTime = 10.0;
+      if (gameDuration <= baseTime) {
+        // 基礎時間內的點擊，每次1金幣
+        return clicks;
+      } else {
+        // 有延長時間，需要區分基礎時間和延長時間的點擊
+        // 假設點擊均勻分佈，計算基礎時間和延長時間的點擊數
+        // 延長時間內的點擊獲得2倍金幣（相對於基礎時間的1金幣）
+        const baseClicks = Math.floor(clicks * (baseTime / gameDuration));
+        const extraClicks = clicks - baseClicks;
+        return baseClicks + (extraClicks * 2);
+      }
+    }
+
     // 結束遊戲
     async function endGame() {
       // 先停止遊戲狀態，防止新的動畫觸發
@@ -2516,32 +2791,77 @@
         mainButton.disabled = true;
       }
 
-      // 提交遊戲結果
-      try {
-        const result = await apiCall('/api/submit-game/', 'POST', {
-          clicks: finalClicks,
-          game_duration: gameState.gameDuration
-        });
+      // 優化：先在前端計算並立即顯示結算結果
+      const coinsEarned = calculateCoinsEarned(finalClicks, gameState.gameDuration);
+      const currentCoins = gameState.userProfile ? gameState.userProfile.coins : 0;
+      const newTotalCoins = currentCoins + coinsEarned;
+      const newTotalClicks = (gameState.userProfile ? gameState.userProfile.total_clicks : 0) + finalClicks;
+      const newTotalGames = (gameState.userProfile ? gameState.userProfile.total_games_played : 0) + 1;
+      const isNewBest = !gameState.userProfile || finalClicks > gameState.userProfile.best_clicks_per_round;
+      const newBestClicks = isNewBest ? finalClicks : (gameState.userProfile ? gameState.userProfile.best_clicks_per_round : 0);
 
-        // 更新資料
-        gameState.userProfile = result.profile;
+      // 立即更新顯示（樂觀更新）
+      if (gameState.userProfile) {
+        gameState.userProfile.coins = newTotalCoins;
+        gameState.userProfile.total_clicks = newTotalClicks;
+        gameState.userProfile.total_games_played = newTotalGames;
+        if (isNewBest) {
+          gameState.userProfile.best_clicks_per_round = newBestClicks;
+        }
         updateProfileDisplay();
-
-        // 顯示新成就
-        if (result.new_achievements && result.new_achievements.length > 0) {
-          showAchievementNotification(result.new_achievements[0]);
-        }
-
-        // 優化：直接使用返回的歷史記錄，避免再次請求
-        if (result.history) {
-          displayHistory(result.history);
-        } else {
-          // 如果沒有返回歷史記錄，才重新載入（向後兼容）
-          loadHistory();
-        }
-      } catch (error) {
-        // 錯誤處理
       }
+
+      // 立即顯示結算結果
+      showGameResultToast(finalClicks, coinsEarned);
+
+      // 異步提交到後端（不阻塞 UI）
+      (async () => {
+        try {
+          // 顯示載入狀態
+          const loadingEl = document.getElementById('resultLoading');
+          if (loadingEl) {
+            loadingEl.style.display = 'block';
+          }
+
+          const result = await apiCall('/api/submit-game/', 'POST', {
+            clicks: finalClicks,
+            game_duration: gameState.gameDuration
+          }, false, false);
+
+          // 隱藏載入狀態
+          if (loadingEl) {
+            loadingEl.style.display = 'none';
+          }
+
+          // 使用後端返回的實際資料更新（可能包含成就獎勵等）
+          if (result.profile) {
+            gameState.userProfile = result.profile;
+            updateProfileDisplay();
+          }
+
+          // 顯示新成就
+          if (result.new_achievements && result.new_achievements.length > 0) {
+            showAchievementNotification(result.new_achievements[0]);
+          }
+
+          // 優化：直接使用返回的歷史記錄，避免再次請求
+          if (result.history) {
+            displayHistory(result.history);
+          } else {
+            // 如果沒有返回歷史記錄，才重新載入（向後兼容）
+            loadHistory();
+          }
+        } catch (error) {
+          // 錯誤處理：如果提交失敗，回滾樂觀更新
+          console.error('提交遊戲結果失敗:', error);
+          // 重新載入實際資料
+          try {
+            await loadProfile();
+          } catch (loadError) {
+            console.error('重新載入資料失敗:', loadError);
+          }
+        }
+      })();
     }
 
     // 加載商店
@@ -2608,7 +2928,7 @@
     // 購買物品
     async function purchaseItem(itemId) {
       try {
-        const result = await apiCall('/api/purchase/', 'POST', { item_id: itemId });
+        const result = await apiCall('/api/purchase/', 'POST', { item_id: itemId }, false, true);
         if (result.success) {
           await loadProfile();
           await loadShop();
@@ -2616,7 +2936,7 @@
           showPurchaseToast(result.item_name, result.new_level);
         }
       } catch (error) {
-        // 錯誤已在 apiCall 中處理
+        // 錯誤已在 apiCall 中處理（使用 Toast）
       }
     }
 
@@ -2704,6 +3024,98 @@
       setTimeout(() => {
         processPurchaseToastQueue();
       }, 400);
+    }
+
+    // 錯誤提示 Toast 相關函數
+    let errorToastTimer = null;
+
+    // 顯示錯誤提示 Toast
+    function showErrorToast(title, errorData) {
+      const toast = document.getElementById('errorToast');
+      const titleEl = document.getElementById('errorToastTitle');
+      const messageEl = document.getElementById('errorToastMessage');
+      
+      titleEl.textContent = title;
+      
+      // 如果是金幣不足錯誤，顯示詳細資訊
+      if (title === '金幣不足' && typeof errorData === 'object' && errorData.current_coins !== undefined) {
+        const currentCoins = errorData.current_coins || 0;
+        const requiredCoins = errorData.required_coins || 0;
+        const shortage = errorData.shortage || 0;
+        messageEl.innerHTML = `
+          當前金幣：<strong>${currentCoins.toLocaleString()} 💰</strong><br>
+          需要金幣：<strong>${requiredCoins.toLocaleString()} 💰</strong><br>
+          還缺少：<strong style="color: #ffd700;">${shortage.toLocaleString()} 💰</strong>
+        `;
+      } else {
+        // 其他錯誤，顯示錯誤訊息
+        messageEl.textContent = typeof errorData === 'string' ? errorData : (errorData.error || '發生錯誤');
+      }
+      
+      // 顯示 Toast
+      toast.classList.add('show');
+      
+      // 清除之前的計時器
+      if (errorToastTimer) {
+        clearTimeout(errorToastTimer);
+      }
+      
+      // 自動關閉（5秒後）
+      errorToastTimer = setTimeout(() => {
+        closeErrorToast();
+      }, 5000);
+    }
+
+    // 關閉錯誤提示 Toast
+    function closeErrorToast() {
+      const toast = document.getElementById('errorToast');
+      toast.classList.remove('show');
+      
+      if (errorToastTimer) {
+        clearTimeout(errorToastTimer);
+        errorToastTimer = null;
+      }
+    }
+
+    // 遊戲結算 Toast 相關函數
+    let gameResultToastTimer = null;
+
+    // 顯示遊戲結算 Toast
+    function showGameResultToast(clicks, coinsEarned) {
+      const toast = document.getElementById('gameResultToast');
+      const clicksEl = document.getElementById('resultClicks');
+      const coinsEl = document.getElementById('resultCoins');
+      
+      if (clicksEl) {
+        clicksEl.textContent = clicks.toLocaleString();
+      }
+      if (coinsEl) {
+        coinsEl.textContent = `+${coinsEarned.toLocaleString()} 💰`;
+      }
+      
+      // 顯示 Toast
+      toast.classList.add('show');
+      
+      // 清除之前的計時器
+      if (gameResultToastTimer) {
+        clearTimeout(gameResultToastTimer);
+      }
+      
+      // 自動關閉（8秒後，給用戶足夠時間查看）
+      gameResultToastTimer = setTimeout(() => {
+        closeGameResultToast();
+      }, 8000);
+    }
+
+    // 關閉遊戲結算 Toast
+    function closeGameResultToast() {
+      const toast = document.getElementById('gameResultToast');
+      toast.classList.remove('show');
+      
+      if (gameResultToastTimer) {
+        clearTimeout(gameResultToastTimer);
+        gameResultToastTimer = null;
+      }
     }
 
     // 打開商店

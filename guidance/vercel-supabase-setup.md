@@ -62,6 +62,70 @@ VERCEL=1
 - `DATABASE_URL` 的優先級高於個別環境變數
 - 如果同時設置了 `DATABASE_URL` 和個別變數，系統會優先使用 `DATABASE_URL`
 
+## 步驟 2.5: 設置 Vercel Function Region（優化響應時間）
+
+**⚡ 性能優化建議**：選擇接近 Supabase 伺服器位置的 Vercel Function Region，可以顯著減少 API 響應時間。
+
+### 如何找到 Supabase 的區域位置
+
+1. 前往 Supabase 專案 → **Settings** → **General**
+2. 查看 **Region** 欄位，會顯示 Supabase 專案的區域（例如：`Southeast Asia (Singapore)`、`US East (North Virginia)` 等）
+
+### 如何設置 Vercel Function Region
+
+#### 方法 A: 在 Vercel Dashboard 設置（推薦）
+
+1. 前往 Vercel 專案 → **Settings** → **Functions**
+2. 找到 **Function Region** 設置
+3. 選擇最接近 Supabase 區域的 Vercel 區域：
+   - **Supabase 區域對應建議**：
+     - `Southeast Asia (Singapore)` → `sin1` (Singapore)
+     - `US East (North Virginia)` → `iad1` (Washington, D.C.)
+     - `US West (Oregon)` → `sfo1` (San Francisco)
+     - `EU West (Ireland)` → `dub1` (Dublin)
+     - `EU Central (Frankfurt)` → `fra1` (Frankfurt)
+     - `Asia Pacific (Tokyo)` → `hnd1` (Tokyo)
+     - `Asia Pacific (Sydney)` → `syd1` (Sydney)
+     - `South America (São Paulo)` → `gru1` (São Paulo)
+
+#### 方法 B: 在 vercel.json 中設置
+
+在 `vercel.json` 中添加 `regions` 配置：
+
+```json
+{
+  "builds": [
+    {
+      "src": "react_game/wsgi.py",
+      "use": "@vercel/python",
+      "config": { 
+        "maxLambdaSize": "15mb", 
+        "runtime": "python3.9",
+        "buildCommand": "python manage.py migrate && python manage.py init_game_data",
+        "regions": ["sin1"]
+      }
+    }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "react_game/wsgi.py" }
+  ]
+}
+```
+
+**注意**：
+- 將 `"sin1"` 替換為對應的區域代碼（見上方對應表）
+- 可以設置多個區域以實現容錯，但建議只設置一個最接近的區域以獲得最佳性能
+- 如果同時在 Dashboard 和 `vercel.json` 中設置，`vercel.json` 的設置會優先
+
+### 性能影響
+
+選擇正確的 Function Region 可以：
+- ✅ 減少資料庫查詢延遲（通常可減少 50-200ms）
+- ✅ 提升 API 響應速度
+- ✅ 改善用戶體驗，特別是對於資料庫密集型操作
+
+**建議**：如果您的 Supabase 專案在 `Southeast Asia (Singapore)`，將 Vercel Function Region 設置為 `sin1`，可以將 API 響應時間從 2-3 秒降低到 1 秒左右。
+
 ## 步驟 3: 執行資料庫遷移
 
 資料庫遷移已經在 `vercel.json` 中配置，會在每次部署時自動執行。

@@ -66,14 +66,14 @@ jobs:
         DATABASE_URL: postgresql://testuser:testpass@127.0.0.1:5432/testdb
         DJANGO_SETTINGS_MODULE: react_game.settings
       run: |
-        python manage.py test game.Test_Cases.test_case_01_game_flow --verbosity=2 --parallel 4 --keepdb
+        python manage.py test game.Test_Cases.01_Authentication_System game.Test_Cases.02_Core_Gameplay game.Test_Cases.03_Shop_System game.Test_Cases.04_Achievement_System game.Test_Cases.07_Flow_And_E2E_Tests game.Test_Cases.08_Technical_Checks --verbosity=2 --parallel 4 --keepdb
 
     - name: 生成測試覆蓋率報告（並行）
       env:
         DATABASE_URL: postgresql://testuser:testpass@127.0.0.1:5432/testdb
         DJANGO_SETTINGS_MODULE: react_game.settings
       run: |
-        coverage run --source='.' --parallel-mode manage.py test game.Test_Cases.test_case_01_game_flow --parallel 4 --keepdb
+        coverage run --source='.' --parallel-mode manage.py test game.Test_Cases.01_Authentication_System game.Test_Cases.02_Core_Gameplay game.Test_Cases.03_Shop_System game.Test_Cases.04_Achievement_System game.Test_Cases.07_Flow_And_E2E_Tests game.Test_Cases.08_Technical_Checks --parallel 4 --keepdb
         coverage combine
         coverage report
         coverage xml
@@ -134,7 +134,7 @@ jobs:
         DJANGO_SETTINGS_MODULE: react_game.settings
         USE_SQLITE: "true"
       run: |
-        python manage.py test game.Test_Cases.test_case_03_frontend_functionality --verbosity=2 --keepdb || echo "前端測試需要 Chrome WebDriver，如果不可用將跳過"
+        python manage.py test game.Test_Cases.05_UI_System --verbosity=2 --keepdb || echo "前端測試需要 Chrome WebDriver，如果不可用將跳過"
 
     - name: 運行前端測試（手機版，順序運行）
       env:
@@ -142,7 +142,7 @@ jobs:
         DJANGO_SETTINGS_MODULE: react_game.settings
         USE_SQLITE: "true"
       run: |
-        python manage.py test game.Test_Cases.test_case_02_frontend_mobile --verbosity=2 --keepdb || echo "前端測試需要 Chrome WebDriver，如果不可用將跳過"
+        python manage.py test game.Test_Cases.06_Frontend_Responsive --verbosity=2 --keepdb || echo "前端測試需要 Chrome WebDriver，如果不可用將跳過"
 
   all-tests:
     name: 所有測試
