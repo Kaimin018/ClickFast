@@ -522,16 +522,32 @@ def api_purchase_item(request):
         except json.JSONDecodeError:
             return JsonResponse({'error': '無效的 JSON 格式'}, status=400)
         
-        item_id_str = data.get('item_id')
+        item_id_raw = data.get('item_id')
         
-        # 驗證 item_id 是否存在且為有效數字
-        if item_id_str is None:
+        # 驗證 item_id 是否存在
+        if item_id_raw is None:
             return JsonResponse({'error': '缺少物品ID參數'}, status=400)
         
+        # 處理不同類型的輸入：可能是數字、字串數字、或包含空格的字串
         try:
-            item_id = int(item_id_str)
-        except (ValueError, TypeError):
-            return JsonResponse({'error': '無效的物品ID格式'}, status=400)
+            # 如果是字串，先去除前後空格
+            if isinstance(item_id_raw, str):
+                item_id_str = item_id_raw.strip()
+                # 驗證字串是否為純數字（不包含小數點、負號等）
+                if not item_id_str or not item_id_str.isdigit():
+                    return JsonResponse({'error': '無效的物品ID格式：必須為正整數'}, status=400)
+                item_id = int(item_id_str)
+            elif isinstance(item_id_raw, (int, float)):
+                # 如果是數字，轉換為整數
+                item_id = int(item_id_raw)
+            else:
+                return JsonResponse({'error': '無效的物品ID格式：必須為數字'}, status=400)
+            
+            # 驗證 item_id 必須為正整數
+            if item_id <= 0:
+                return JsonResponse({'error': '無效的物品ID：必須大於0'}, status=400)
+        except (ValueError, TypeError) as e:
+            return JsonResponse({'error': f'無效的物品ID格式：{str(e)}'}, status=400)
         
         # 優化：在 transaction 外查詢 ShopItem（靜態資料，不需要鎖定）
         shop_item = ShopItem.objects.get(id=item_id)
