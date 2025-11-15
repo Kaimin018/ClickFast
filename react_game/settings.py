@@ -151,8 +151,9 @@ def parse_database_url(database_url):
                 hostname = '127.0.0.1'
         
         # 構建 OPTIONS，確保在 CI 環境中強制使用 TCP/IP
+        # 增加連接超時時間，避免 Supabase 連接超時
         options = {
-            'connect_timeout': 10,
+            'connect_timeout': 30,  # 增加到 30 秒，避免網路延遲導致的超時
             'sslmode': get_ssl_mode(hostname),  # CI 環境和 localhost 不使用 SSL，雲端服務使用 SSL
         }
         
@@ -207,7 +208,7 @@ elif os.getenv('VERCEL'):
                 'HOST': db_host,
                 'PORT': os.getenv('DB_PORT', '5432'),
                 'OPTIONS': {
-                    'connect_timeout': 10,
+                    'connect_timeout': 30,  # 增加到 30 秒，避免 Supabase 連接超時
                     'sslmode': get_ssl_mode(db_host),  # CI 環境和 localhost 不使用 SSL，雲端服務使用 SSL
                 },
                 'CONN_MAX_AGE': 600,  # 連接池：保持連接 10 分鐘，減少連接開銷
@@ -290,6 +291,13 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Session 配置 - 確保登入狀態在刷新時不會丟失
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # 7 天
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # 本地開發設為 False，生產環境應設為 True（HTTPS）
+SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_SAVE_EVERY_REQUEST = True  # 每次請求都更新 session，延長過期時間
 
 # 日誌配置
 # 過濾掉未登錄時的 401 警告（這是正常行為，不需要記錄為警告）

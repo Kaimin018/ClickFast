@@ -5,6 +5,7 @@
 - `test_case_01_game_flow.py` - 後端遊戲流程測試（12 個測試用例）
 - `test_case_02_frontend_mobile.py` - 前端手機版測試（10 個測試用例）
 - `test_case_03_frontend_functionality.py` - 前端功能測試（10 個測試用例）
+- `test_case_04_login_scenarios.py` - 登入狀況測試（19 個測試用例）
 
 ## 運行測試
 
@@ -18,6 +19,7 @@ python manage.py test game.Test_Cases
 python manage.py test game.Test_Cases.test_case_01_game_flow
 python manage.py test game.Test_Cases.test_case_02_frontend_mobile
 python manage.py test game.Test_Cases.test_case_03_frontend_functionality
+python manage.py test game.Test_Cases.test_case_04_login_scenarios
 ```
 
 ### 並行測試（加速）
@@ -27,6 +29,7 @@ python manage.py test game.Test_Cases.test_case_03_frontend_functionality
 ```bash
 # 後端測試：使用並行（推薦）
 python manage.py test game.Test_Cases.test_case_01_game_flow --parallel 4 --keepdb
+python manage.py test game.Test_Cases.test_case_04_login_scenarios --parallel 4 --keepdb
 
 # 前端測試：必須順序運行（因為需要啟動瀏覽器）
 python manage.py test game.Test_Cases.test_case_02_frontend_mobile --keepdb
@@ -85,6 +88,7 @@ $env:USE_SQLITE="true"
 
 # 後端測試（並行，快速）
 python manage.py test game.Test_Cases.test_case_01_game_flow --parallel 4 --keepdb
+python manage.py test game.Test_Cases.test_case_04_login_scenarios --parallel 4 --keepdb
 
 # 前端測試（順序運行，因為需要瀏覽器）
 python manage.py test game.Test_Cases.test_case_02_frontend_mobile --keepdb
@@ -101,5 +105,32 @@ $env:USE_SQLITE="true"; python manage.py test game.Test_Cases --keepdb
 ```bash
 # 只運行特定測試用例
 python manage.py test game.Test_Cases.test_case_01_game_flow.GameFlowTestCase.test_case_01_user_login_and_register --keepdb
+python manage.py test game.Test_Cases.test_case_04_login_scenarios.LoginScenariosTestCase.test_case_01_new_user_registration --keepdb
 ```
+
+## 測試用例詳細說明
+
+### test_case_04_login_scenarios.py - 登入狀況測試
+
+此測試文件包含 19 個測試用例，涵蓋各種登入場景：
+
+1. **test_case_01_new_user_registration** - 新用戶註冊
+2. **test_case_02_existing_user_login** - 已存在用戶登入
+3. **test_case_03_empty_username** - 空用戶名
+4. **test_case_04_whitespace_only_username** - 只有空白字符的用戶名
+5. **test_case_05_username_with_leading_trailing_spaces** - 用戶名前後有空格（trim 處理）
+6. **test_case_06_special_characters_username** - 特殊字符用戶名
+7. **test_case_07_long_username** - 長用戶名
+8. **test_case_08_session_persistence** - Session 持久性
+9. **test_case_09_logout_functionality** - 登出功能
+10. **test_case_10_unauthorized_access** - 未登入狀態訪問受保護的 API
+11. **test_case_11_multiple_login_same_user** - 同一用戶多次登入
+12. **test_case_12_different_users_login** - 不同用戶登入
+13. **test_case_13_login_with_profile_data** - 登入後驗證玩家資料完整性
+14. **test_case_14_login_after_logout** - 登出後重新登入
+15. **test_case_15_case_sensitive_username** - 用戶名大小寫敏感性
+16. **test_case_16_missing_username_field** - 缺少用戶名字段
+17. **test_case_17_invalid_json** - 無效的 JSON 格式
+18. **test_case_18_get_method_not_allowed** - GET 方法不被允許
+19. **test_case_19_concurrent_login_different_clients** - 不同客戶端同時登入同一用戶
 

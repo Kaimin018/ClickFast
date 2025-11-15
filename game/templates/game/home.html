@@ -22,6 +22,14 @@
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
+      /* 防止手機版下拉刷新 */
+      overscroll-behavior-y: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    html {
+      /* 防止手機版下拉刷新 */
+      overscroll-behavior-y: none;
     }
 
     .container {
@@ -746,6 +754,41 @@
       width: 90%;
       max-height: 80vh;
       overflow-y: auto;
+    }
+
+    /* 載入中模態框樣式 */
+    .loading-modal .modal-content {
+      text-align: center;
+      padding: 40px;
+      max-width: 300px;
+    }
+
+    .loading-spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 16px;
+      color: #667eea;
+      margin-top: 10px;
+    }
+
+    .loading-details {
+      font-size: 14px;
+      color: #666;
+      margin-top: 10px;
+      line-height: 1.5;
     }
 
     /* 購買成功通知 Toast */
@@ -1616,6 +1659,15 @@
     </div>
   </div>
 
+  <!-- 載入中模態框 -->
+  <div class="modal loading-modal" id="loadingModal">
+    <div class="modal-content">
+      <div class="loading-spinner"></div>
+      <div class="loading-text" id="loadingText">正在處理中...</div>
+      <div class="loading-details" id="loadingDetails"></div>
+    </div>
+  </div>
+
   <script>
     // 遊戲狀態
     let gameState = {
@@ -1657,13 +1709,39 @@
         }
       } catch (error) {
         console.error('API Error:', error);
+        
         // 如果是靜默模式，不顯示 alert
         // 或者錯誤訊息是「未登錄」（這是正常情況，不需要提示）
         if (!silent && !(error.message && error.message.includes('未登錄'))) {
-          alert('錯誤: ' + error.message);
+          // 檢測資料庫連接錯誤，顯示更友好的錯誤訊息
+          let errorMessage = error.message;
+          if (errorMessage.includes('timeout') || errorMessage.includes('connection') || errorMessage.includes('pooler.supabase.com')) {
+            errorMessage = '無法連接到資料庫伺服器，請稍後再試。\n\n如果問題持續存在，可能是資料庫服務暫時無法使用。';
+          } else if (errorMessage.includes('500') || errorMessage.includes('Internal Server Error')) {
+            errorMessage = '伺服器發生錯誤，請稍後再試。';
+          }
+          alert('錯誤: ' + errorMessage);
         }
         throw error;
       }
+    }
+
+    // 顯示載入中視窗
+    function showLoadingModal(message = '正在處理中...', details = '') {
+      document.getElementById('loadingText').textContent = message;
+      const detailsEl = document.getElementById('loadingDetails');
+      if (details) {
+        detailsEl.textContent = details;
+        detailsEl.style.display = 'block';
+      } else {
+        detailsEl.style.display = 'none';
+      }
+      document.getElementById('loadingModal').classList.add('active');
+    }
+
+    // 隱藏載入中視窗
+    function hideLoadingModal() {
+      document.getElementById('loadingModal').classList.remove('active');
     }
 
     // 登錄或註冊
@@ -1674,9 +1752,30 @@
         return;
       }
 
+      // 顯示載入中視窗
+      showLoadingModal('正在登入中...', '正在驗證用戶名並建立連線，請稍候');
+
       try {
+        // 更新載入訊息
+        setTimeout(() => {
+          if (document.getElementById('loadingModal').classList.contains('active')) {
+            document.getElementById('loadingDetails').textContent = '正在連接資料庫伺服器...';
+          }
+        }, 1000);
+
         const result = await apiCall('/api/login/', 'POST', { username });
+        
+        // 更新載入訊息
+        if (document.getElementById('loadingModal').classList.contains('active')) {
+          document.getElementById('loadingText').textContent = '登入成功！';
+          document.getElementById('loadingDetails').textContent = '正在載入遊戲資料...';
+        }
+
         if (result.success) {
+          // 保存登入狀態到 localStorage（作為備份）
+          localStorage.setItem('clickfast_username', username);
+          localStorage.setItem('clickfast_logged_in', 'true');
+          
           // 清除之前的歷史記錄顯示
           document.getElementById('historyContainer').innerHTML = '<p style="color: #666;">暫無記錄</p>';
           document.getElementById('detailedHistoryContainer').innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">暫無記錄</p>';
@@ -1686,13 +1785,26 @@
           document.getElementById('gameContent').style.display = 'block';
           document.getElementById('userInfo').style.display = 'flex';
           updateProfileDisplay();
+          
+          // 更新載入訊息
+          if (document.getElementById('loadingModal').classList.contains('active')) {
+            document.getElementById('loadingDetails').textContent = '正在載入商店、成就和歷史記錄...';
+          }
+          
           // 優化：載入完整的 profile（包含購買記錄和徽章），loadProfile 內部會並行載入其他資料
-          loadProfile();
+          await loadProfile();
+          
           // 檢查是否為超級帳號
           checkSuperAccount();
+          
+          // 短暫延遲後隱藏載入視窗，讓用戶看到成功訊息
+          setTimeout(() => {
+            hideLoadingModal();
+          }, 500);
         }
       } catch (error) {
-        // 錯誤已在 apiCall 中處理
+        // 隱藏載入視窗（錯誤已在 apiCall 中處理並顯示 alert）
+        hideLoadingModal();
       }
     }
 
@@ -1813,6 +1925,10 @@
         // 調用登出 API
         await apiCall('/api/logout/', 'POST');
         
+        // 清除 localStorage 中的登入狀態
+        localStorage.removeItem('clickfast_username');
+        localStorage.removeItem('clickfast_logged_in');
+        
         // 重置遊戲狀態
         gameState = {
           isPlaying: false,
@@ -1911,10 +2027,16 @@
     }
 
     // 加載玩家資料
-    async function loadProfile() {
+    let isReloadingProfile = false; // 防止無限遞迴
+    async function loadProfile(skipAutoRelogin = false) {
+      // 如果正在重新載入，避免重複執行
+      if (isReloadingProfile) return;
+      
       try {
         // 使用靜默模式，避免未登錄時顯示錯誤訊息
         const result = await apiCall('/api/profile/', 'GET', null, true);
+        isReloadingProfile = false; // 重置標記
+        
         gameState.userProfile = result.profile;
         gameState.purchases = result.purchases || {};
         gameState.badges = result.badges || [null, null, null];
@@ -1924,6 +2046,13 @@
         document.getElementById('loginPanel').style.display = 'none';
         document.getElementById('gameContent').style.display = 'block';
         document.getElementById('userInfo').style.display = 'flex';
+        
+        // 保存登入狀態到 localStorage（作為備份）
+        if (result.profile && result.profile.username) {
+          localStorage.setItem('clickfast_username', result.profile.username);
+          localStorage.setItem('clickfast_logged_in', 'true');
+        }
+        
         // 優化：並行載入所有資料，減少等待時間
         Promise.all([
           loadShop(),
@@ -1935,6 +2064,43 @@
         // 檢查是否為超級帳號
         checkSuperAccount();
       } catch (error) {
+        isReloadingProfile = false; // 重置標記
+        
+        // 如果未登錄且未跳過自動重新登入，檢查 localStorage 是否有保存的登入狀態
+        // 如果有，嘗試自動重新登入（可能是 session 過期但用戶仍想保持登入）
+        if (!skipAutoRelogin) {
+          const savedUsername = localStorage.getItem('clickfast_username');
+          const isLoggedIn = localStorage.getItem('clickfast_logged_in') === 'true';
+          
+          if (savedUsername && isLoggedIn) {
+            // 嘗試自動重新登入
+            isReloadingProfile = true; // 設置標記，防止遞迴
+            // 顯示載入中視窗
+            showLoadingModal('正在重新登入中...', '偵測到已保存的登入狀態，正在重新連線...');
+            try {
+              const result = await apiCall('/api/login/', 'POST', { username: savedUsername }, true);
+              if (result.success) {
+                // 更新載入訊息
+                if (document.getElementById('loadingModal').classList.contains('active')) {
+                  document.getElementById('loadingText').textContent = '重新登入成功！';
+                  document.getElementById('loadingDetails').textContent = '正在載入遊戲資料...';
+                }
+                // 重新登入成功，重新載入資料（跳過自動重新登入，避免無限遞迴）
+                await loadProfile(true);
+                // 隱藏載入視窗
+                setTimeout(() => {
+                  hideLoadingModal();
+                }, 500);
+                return;
+              }
+            } catch (loginError) {
+              // 自動登入失敗，清除 localStorage 並顯示登入面板
+              localStorage.removeItem('clickfast_username');
+              localStorage.removeItem('clickfast_logged_in');
+              hideLoadingModal();
+            }
+          }
+        }
         // 如果未登錄，保持登錄面板顯示
         // 這是正常情況，不需要處理，也不顯示錯誤訊息
       }
@@ -2844,6 +3010,49 @@
     document.addEventListener('gestureend', function (e) {
       e.preventDefault();
     });
+
+    // 防止手機版下拉刷新
+    let touchStartY = 0;
+    let touchStartX = 0;
+    let isScrolling = false;
+
+    document.addEventListener('touchstart', function (e) {
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+      isScrolling = false;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', function (e) {
+      if (!touchStartY || !touchStartX) return;
+      
+      const touchY = e.touches[0].clientY;
+      const touchX = e.touches[0].clientX;
+      const deltaY = touchY - touchStartY;
+      const deltaX = touchX - touchStartX;
+      
+      // 判斷是否為垂直滾動
+      if (Math.abs(deltaY) > Math.abs(deltaX)) {
+        isScrolling = true;
+        
+        // 如果頁面已經在頂部且向下滑動，阻止下拉刷新
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        if (scrollTop === 0 && deltaY > 0) {
+          e.preventDefault();
+        }
+        // 如果頁面已經在底部且向上滑動，也阻止（防止觸發刷新）
+        const scrollHeight = document.documentElement.scrollHeight;
+        const clientHeight = document.documentElement.clientHeight;
+        if (scrollTop + clientHeight >= scrollHeight - 1 && deltaY < 0) {
+          e.preventDefault();
+        }
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchend', function (e) {
+      touchStartY = 0;
+      touchStartX = 0;
+      isScrolling = false;
+    }, { passive: true });
 
     // 初始化
     document.addEventListener('DOMContentLoaded', () => {

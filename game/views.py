@@ -5,7 +5,9 @@ from django.views.decorators.http import require_http_methods
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db import transaction
+from django.db import connection
 import json
+import traceback
 from .models import (
     PlayerProfile, GameSession, ShopItem, 
     PlayerPurchase, Achievement, PlayerAchievement
@@ -14,6 +16,18 @@ from .models import (
 
 def home(request):
     return render(request, 'game/home.html')
+
+
+def handle_database_error(e):
+    """處理資料庫連接錯誤，返回友好的錯誤訊息"""
+    error_str = str(e).lower()
+    if 'timeout' in error_str or 'connection' in error_str or 'pooler.supabase.com' in error_str:
+        return '無法連接到資料庫伺服器，請稍後再試。如果問題持續存在，可能是資料庫服務暫時無法使用。'
+    elif 'operationalerror' in error_str or 'database' in error_str:
+        return '資料庫操作失敗，請稍後再試。'
+    else:
+        # 對於其他錯誤，返回原始錯誤訊息（但簡化技術細節）
+        return str(e)
 
 
 def get_or_create_profile(user):
@@ -83,7 +97,8 @@ def api_login_or_register(request):
             }
         })
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        error_message = handle_database_error(e)
+        return JsonResponse({'error': error_message}, status=500)
 
 
 @csrf_exempt
@@ -94,7 +109,8 @@ def api_logout(request):
         logout(request)
         return JsonResponse({'success': True})
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        error_message = handle_database_error(e)
+        return JsonResponse({'error': error_message}, status=500)
 
 
 @csrf_exempt
@@ -254,7 +270,8 @@ def api_submit_game(request):
             'history': recent_history,  # 包含最新歷史記錄
         })
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        error_message = handle_database_error(e)
+        return JsonResponse({'error': error_message}, status=500)
 
 
 def check_achievements(user, profile, current_clicks):
@@ -456,7 +473,8 @@ def api_purchase_item(request):
     except ShopItem.DoesNotExist:
         return JsonResponse({'error': '物品不存在'}, status=404)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        error_message = handle_database_error(e)
+        return JsonResponse({'error': error_message}, status=500)
 
 
 @csrf_exempt
@@ -566,7 +584,8 @@ def api_update_badges(request):
             'badges': badges,
         })
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        error_message = handle_database_error(e)
+        return JsonResponse({'error': error_message}, status=500)
 
 
 @csrf_exempt
@@ -639,7 +658,8 @@ def api_rollback_shop_level(request):
     except ValueError as e:
         return JsonResponse({'error': '無效的參數值'}, status=400)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        error_message = handle_database_error(e)
+        return JsonResponse({'error': error_message}, status=500)
 
 
 @csrf_exempt
@@ -674,4 +694,5 @@ def api_rollback_all_shop_items(request):
                 'message': f'已將 {len(rolled_back_items)} 個商店物品回溯到初始狀態'
             })
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        error_message = handle_database_error(e)
+        return JsonResponse({'error': error_message}, status=500)
