@@ -28,11 +28,11 @@ class PlayerProfile(models.Model):
 
 class GameSession(models.Model):
     """遊戲會話記錄"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='game_sessions')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='game_sessions', db_index=True)
     clicks = models.IntegerField(default=0, verbose_name="點擊次數")
     game_duration = models.FloatField(default=10.0, verbose_name="遊戲時長（秒）")
     coins_earned = models.IntegerField(default=0, verbose_name="獲得金幣")
-    played_at = models.DateTimeField(auto_now_add=True, verbose_name="遊戲時間")
+    played_at = models.DateTimeField(auto_now_add=True, verbose_name="遊戲時間", db_index=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.clicks} 點擊 - {self.played_at}"
@@ -41,6 +41,9 @@ class GameSession(models.Model):
         verbose_name = "遊戲記錄"
         verbose_name_plural = "遊戲記錄"
         ordering = ['-played_at']
+        indexes = [
+            models.Index(fields=['user', '-played_at'], name='game_session_user_played_idx'),
+        ]
 
 
 class ShopItem(models.Model):
@@ -72,8 +75,8 @@ class ShopItem(models.Model):
 
 class PlayerPurchase(models.Model):
     """玩家購買記錄"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='purchases')
-    shop_item = models.ForeignKey(ShopItem, on_delete=models.CASCADE, related_name='purchases')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='purchases', db_index=True)
+    shop_item = models.ForeignKey(ShopItem, on_delete=models.CASCADE, related_name='purchases', db_index=True)
     level = models.IntegerField(default=1, verbose_name="等級")
     price_paid = models.IntegerField(verbose_name="支付價格")
     purchased_at = models.DateTimeField(auto_now_add=True, verbose_name="購買時間")
@@ -107,8 +110,8 @@ class Achievement(models.Model):
 
 class PlayerAchievement(models.Model):
     """玩家成就解鎖記錄"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='achievements')
-    achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE, related_name='player_achievements')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='achievements', db_index=True)
+    achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE, related_name='player_achievements', db_index=True)
     unlocked_at = models.DateTimeField(auto_now_add=True, verbose_name="解鎖時間")
     reward_claimed = models.BooleanField(default=False, verbose_name="獎勵已領取")
 

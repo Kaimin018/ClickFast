@@ -17,6 +17,22 @@ from urllib.parse import urlparse
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# 載入 .env.local 文件（用於本地開發）
+# 如果文件不存在，不會報錯
+env_local_path = BASE_DIR / '.env.local'
+if env_local_path.exists():
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(env_local_path)
+    except ImportError:
+        # 如果 python-dotenv 未安裝，手動讀取 .env.local
+        with open(env_local_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    os.environ.setdefault(key.strip(), value.strip())
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
@@ -105,6 +121,7 @@ def parse_database_url(database_url):
                 'connect_timeout': 10,
                 'sslmode': 'require',  # 強制使用 SSL 連接（適用於 Supabase）
             },
+            'CONN_MAX_AGE': 600,  # 連接池：保持連接 10 分鐘，減少連接開銷
         }
     except Exception as e:
         # 如果解析失敗，返回 None
@@ -149,6 +166,7 @@ elif os.getenv('VERCEL'):
                     'connect_timeout': 10,
                     'sslmode': 'require',  # 強制使用 SSL 連接（適用於 Supabase）
                 },
+                'CONN_MAX_AGE': 600,  # 連接池：保持連接 10 分鐘，減少連接開銷
             }
         }
     else:
@@ -174,6 +192,7 @@ else:
                 'OPTIONS': {
                     'sslmode': 'require',  # 強制使用 SSL 連接（適用於 Supabase）
                 },
+                'CONN_MAX_AGE': 600,  # 連接池：保持連接 10 分鐘，減少連接開銷
             }
         }
     else:

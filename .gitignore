@@ -25,3 +25,5 @@ security/
 .env
 .env.local
 .env.*.local
+*.env
+*.env.local

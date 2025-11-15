@@ -106,8 +106,8 @@ def api_get_profile(request):
     
     profile = get_or_create_profile(request.user)
     
-    # 獲取玩家購買記錄
-    purchases = PlayerPurchase.objects.filter(user=request.user)
+    # 獲取玩家購買記錄（使用 select_related 優化，避免 N+1 查詢）
+    purchases = PlayerPurchase.objects.filter(user=request.user).select_related('shop_item')
     player_items = {}
     for purchase in purchases:
         player_items[purchase.shop_item.item_type] = {
@@ -115,7 +115,7 @@ def api_get_profile(request):
             'effect_value': purchase.shop_item.effect_value * purchase.level
         }
     
-    # 獲取已解鎖的成就
+    # 獲取已解鎖的成就（已使用 select_related 優化）
     achievements = PlayerAchievement.objects.filter(user=request.user).select_related('achievement')
     unlocked_achievements = [
         {
@@ -127,24 +127,36 @@ def api_get_profile(request):
         for ach in achievements
     ]
     
-    # 獲取用戶選擇的徽章信息
+    # 獲取用戶選擇的徽章信息（優化：一次性查詢所有需要的成就和解鎖狀態）
     badge_ids = [profile.badge_1_id, profile.badge_2_id, profile.badge_3_id]
+    valid_badge_ids = [bid for bid in badge_ids if bid is not None]
+    
+    # 一次性查詢所有需要的成就
+    badge_achievements = {}
+    if valid_badge_ids:
+        achievements_dict = {
+            ach.id: ach for ach in Achievement.objects.filter(id__in=valid_badge_ids)
+        }
+        # 一次性查詢所有已解鎖的成就ID
+        unlocked_achievement_ids = set(
+            PlayerAchievement.objects.filter(user=request.user, achievement_id__in=valid_badge_ids)
+            .values_list('achievement_id', flat=True)
+        )
+        
+        for ach_id in valid_badge_ids:
+            if ach_id in achievements_dict and ach_id in unlocked_achievement_ids:
+                ach = achievements_dict[ach_id]
+                badge_achievements[ach_id] = {
+                    'id': ach.id,
+                    'icon': ach.icon,
+                    'name': ach.name,
+                }
+    
+    # 構建徽章列表
     badges = []
     for badge_id in badge_ids:
-        if badge_id:
-            try:
-                achievement = Achievement.objects.get(id=badge_id)
-                # 檢查用戶是否已解鎖此成就
-                if PlayerAchievement.objects.filter(user=request.user, achievement=achievement).exists():
-                    badges.append({
-                        'id': achievement.id,
-                        'icon': achievement.icon,
-                        'name': achievement.name,
-                    })
-                else:
-                    badges.append(None)
-            except Achievement.DoesNotExist:
-                badges.append(None)
+        if badge_id and badge_id in badge_achievements:
+            badges.append(badge_achievements[badge_id])
         else:
             badges.append(None)
     
@@ -213,6 +225,19 @@ def api_submit_game(request):
             # 檢查成就
             new_achievements = check_achievements(request.user, profile, clicks)
             
+            # 優化：直接返回最新的歷史記錄，避免前端再次請求
+            # 只查詢最新的 10 筆記錄（與前端 loadHistory 的 limit 一致）
+            recent_sessions = GameSession.objects.filter(user=request.user).order_by('-played_at')[:10]
+            recent_history = [
+                {
+                    'clicks': s.clicks,
+                    'game_duration': s.game_duration,
+                    'coins_earned': s.coins_earned,
+                    'played_at': s.played_at.isoformat(),
+                }
+                for s in recent_sessions
+            ]
+            
         return JsonResponse({
             'success': True,
             'coins_earned': coins_earned,
@@ -225,7 +250,8 @@ def api_submit_game(request):
                 'total_clicks': profile.total_clicks,
                 'best_clicks_per_round': profile.best_clicks_per_round,
                 'total_games_played': profile.total_games_played,
-            }
+            },
+            'history': recent_history,  # 包含最新歷史記錄
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -238,9 +264,15 @@ def check_achievements(user, profile, current_clicks):
     # 獲取所有成就
     all_achievements = Achievement.objects.all()
     
+    # 優化：一次性查詢所有已解鎖的成就ID，避免 N+1 查詢
+    unlocked_achievement_ids = set(
+        PlayerAchievement.objects.filter(user=user)
+        .values_list('achievement_id', flat=True)
+    )
+    
     for achievement in all_achievements:
-        # 檢查是否已解鎖
-        if PlayerAchievement.objects.filter(user=user, achievement=achievement).exists():
+        # 檢查是否已解鎖（使用集合查找，O(1) 時間複雜度）
+        if achievement.id in unlocked_achievement_ids:
             continue
         
         # 檢查是否達到目標
@@ -288,23 +320,24 @@ def api_get_shop(request):
     items = ShopItem.objects.all()
     shop_data = []
     
-    # 檢查是否有額外點擊按鈕
+    # 優化：一次性查詢所有購買記錄，避免 N+1 查詢
+    purchases_dict = {}
     extra_button_level = 0
     if request.user.is_authenticated:
+        # 一次性查詢該用戶的所有購買記錄
+        purchases = PlayerPurchase.objects.filter(user=request.user).select_related('shop_item')
+        purchases_dict = {purchase.shop_item_id: purchase for purchase in purchases}
+        
+        # 檢查是否有額外點擊按鈕
         extra_button_item = ShopItem.objects.filter(item_type='extra_button').first()
-        if extra_button_item:
-            extra_button_purchase = PlayerPurchase.objects.filter(
-                user=request.user,
-                shop_item=extra_button_item
-            ).first()
-            extra_button_level = extra_button_purchase.level if extra_button_purchase else 0
+        if extra_button_item and extra_button_item.id in purchases_dict:
+            extra_button_level = purchases_dict[extra_button_item.id].level
     
     for item in items:
-        # 獲取玩家當前等級
+        # 從字典中獲取玩家當前等級（避免單獨查詢）
         current_level = 0
-        if request.user.is_authenticated:
-            purchase = PlayerPurchase.objects.filter(user=request.user, shop_item=item).first()
-            current_level = purchase.level if purchase else 0
+        if request.user.is_authenticated and item.id in purchases_dict:
+            current_level = purchases_dict[item.id].level
         
         # 計算下一級價格（價格遞增：基礎價格 * (等級 + 1)）
         next_level_price = item.base_price * (current_level + 1) if current_level < item.max_level else None
@@ -463,7 +496,8 @@ def api_get_game_history(request):
         return JsonResponse({'error': '未登錄'}, status=401)
     
     limit = int(request.GET.get('limit', 10))
-    sessions = GameSession.objects.filter(user=request.user)[:limit]
+    # 使用 order_by 確保使用索引（模型 Meta 中已定義 ordering，但明確指定更安全）
+    sessions = GameSession.objects.filter(user=request.user).order_by('-played_at')[:limit]
     
     history = [
         {

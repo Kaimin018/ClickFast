@@ -2,7 +2,7 @@
 <html>
 <head>
   <title>ClickFast</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self';">
   <style>
     * {
@@ -17,6 +17,11 @@
       min-height: 100vh;
       padding: 20px;
       color: #333;
+      /* 防止手機連點放大 */
+      touch-action: manipulation;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     .container {
@@ -238,6 +243,9 @@
       border-radius: 5px;
       margin-right: 10px;
       width: 200px;
+      /* 允許輸入框選擇文字 */
+      user-select: text;
+      -webkit-user-select: text;
     }
 
     .login-panel button {
@@ -309,6 +317,9 @@
       user-select: none;
       position: relative;
       overflow: visible;
+      /* 防止手機連點放大 */
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .click-button::before {
@@ -1124,17 +1135,68 @@
     }
 
     @media (max-width: 768px) {
+      body {
+        padding: 10px;
+      }
+
       .main-content {
         grid-template-columns: 1fr;
+        gap: 15px;
       }
 
       .header {
         flex-direction: column;
         text-align: center;
+        padding: 15px;
+        gap: 10px;
+      }
+
+      .user-info {
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+      }
+
+      .stat-item {
+        font-size: 14px;
+      }
+
+      .coins {
+        font-size: 20px;
+      }
+
+      .panel {
+        padding: 15px;
+      }
+
+      .panel h2 {
+        font-size: 18px;
+        margin-bottom: 12px;
+      }
+
+      .game-container {
+        min-height: 350px;
+        padding: 10px;
+      }
+
+      .badges-container-game {
+        top: 10px;
+        right: 10px;
+        gap: 5px;
+      }
+
+      .badge-slot {
+        width: 40px;
+        height: 40px;
+      }
+
+      .badge-icon {
+        font-size: 22px;
       }
 
       .super-account-controls {
         width: 95%;
+        padding: 12px;
       }
 
       .super-account-controls .controls-row {
@@ -1152,6 +1214,8 @@
       .username-display {
         margin-right: 0;
         margin-bottom: 10px;
+        font-size: 16px;
+        padding: 6px 12px;
       }
 
       .settings-container {
@@ -1165,17 +1229,110 @@
       }
 
       .click-button {
-        padding: 25px 40px;
-        font-size: 20px;
-        min-width: 120px;
+        padding: 35px 50px;
+        font-size: 22px;
+        min-width: 200px;
+        width: 100%;
+        max-width: 300px;
+        /* 手機上更大的觸控區域 */
+        min-height: 70px;
+      }
+
+      .click-button.auto-click-button {
+        padding: 20px 30px;
+        font-size: 16px;
+        min-width: 140px;
+        min-height: 60px;
+      }
+
+      .click-buttons-container {
+        gap: 15px;
+        margin: 15px 0;
+      }
+
+      .auto-click-buttons-wrapper {
+        gap: 8px;
+        width: 100%;
+        justify-content: center;
       }
 
       .timer {
-        font-size: 24px;
+        font-size: 28px;
+        margin: 12px 0;
       }
 
       .clicks-display {
-        font-size: 48px;
+        font-size: 42px;
+        margin: 20px 0;
+      }
+
+      .game-controls {
+        margin: 15px 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+      }
+
+      .btn {
+        padding: 12px 20px;
+        font-size: 15px;
+        margin: 0;
+        flex: 1;
+        min-width: 100px;
+        max-width: 150px;
+      }
+
+      .auto-clicker-info {
+        font-size: 13px;
+        padding: 8px;
+        margin: 8px 0;
+      }
+
+      .modal-content {
+        padding: 20px;
+        width: 95%;
+        max-height: 85vh;
+      }
+
+      .modal-header h2 {
+        font-size: 18px;
+      }
+
+      .shop-item {
+        padding: 12px;
+      }
+
+      .shop-item-name {
+        font-size: 16px;
+      }
+
+      .achievements-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+      }
+
+      .achievement-icon {
+        font-size: 36px;
+      }
+
+      .login-panel {
+        padding: 30px 20px;
+      }
+
+      .login-panel input {
+        width: 100%;
+        max-width: 250px;
+        margin-right: 0;
+        margin-bottom: 10px;
+        /* 允許輸入框選擇文字 */
+        user-select: text;
+        -webkit-user-select: text;
+      }
+
+      .login-panel button {
+        width: 100%;
+        max-width: 250px;
       }
     }
   </style>
@@ -1445,14 +1602,17 @@
       try {
         const result = await apiCall('/api/login/', 'POST', { username });
         if (result.success) {
+          // 清除之前的歷史記錄顯示
+          document.getElementById('historyContainer').innerHTML = '<p style="color: #666;">暫無記錄</p>';
+          document.getElementById('detailedHistoryContainer').innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">暫無記錄</p>';
+          
           gameState.userProfile = result.profile;
           document.getElementById('loginPanel').style.display = 'none';
           document.getElementById('gameContent').style.display = 'block';
           document.getElementById('userInfo').style.display = 'flex';
           updateProfileDisplay();
-          loadShop();
-          loadAchievements();
-          loadHistory();
+          // 優化：載入完整的 profile（包含購買記錄和徽章），loadProfile 內部會並行載入其他資料
+          loadProfile();
           // 檢查是否為超級帳號
           checkSuperAccount();
         }
@@ -1606,6 +1766,10 @@
         document.getElementById('accountModal').classList.remove('active');
         document.getElementById('historyModal').classList.remove('active');
         document.getElementById('achievementNotification').classList.remove('active');
+        
+        // 清除歷史記錄顯示
+        document.getElementById('historyContainer').innerHTML = '<p style="color: #666;">暫無記錄</p>';
+        document.getElementById('detailedHistoryContainer').innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">暫無記錄</p>';
       } catch (error) {
         // 即使 API 調用失敗，也執行登出操作
         gameState = {
@@ -1630,6 +1794,10 @@
         document.getElementById('accountModal').classList.remove('active');
         document.getElementById('historyModal').classList.remove('active');
         document.getElementById('achievementNotification').classList.remove('active');
+        
+        // 清除歷史記錄顯示
+        document.getElementById('historyContainer').innerHTML = '<p style="color: #666;">暫無記錄</p>';
+        document.getElementById('detailedHistoryContainer').innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">暫無記錄</p>';
       }
     }
 
@@ -1681,9 +1849,14 @@
         document.getElementById('loginPanel').style.display = 'none';
         document.getElementById('gameContent').style.display = 'block';
         document.getElementById('userInfo').style.display = 'flex';
-        loadShop();
-        loadAchievements();
-        loadHistory();
+        // 優化：並行載入所有資料，減少等待時間
+        Promise.all([
+          loadShop(),
+          loadAchievements(),
+          loadHistory()
+        ]).catch(error => {
+          console.error('載入資料時發生錯誤:', error);
+        });
         // 檢查是否為超級帳號
         checkSuperAccount();
       } catch (error) {
@@ -2009,8 +2182,13 @@
           showAchievementNotification(result.new_achievements[0]);
         }
 
-        // 重新加載歷史記錄
-        loadHistory();
+        // 優化：直接使用返回的歷史記錄，避免再次請求
+        if (result.history) {
+          displayHistory(result.history);
+        } else {
+          // 如果沒有返回歷史記錄，才重新載入（向後兼容）
+          loadHistory();
+        }
       } catch (error) {
         // 錯誤處理
       }
@@ -2355,6 +2533,8 @@
 
     // 打開歷史記錄介面
     function openHistory() {
+      // 先清除舊的歷史記錄顯示，避免顯示上一個用戶的記錄
+      document.getElementById('detailedHistoryContainer').innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">載入中...</p>';
       document.getElementById('historyModal').classList.add('active');
       loadDetailedHistory();
     }
@@ -2513,6 +2693,29 @@
       container.innerHTML = html;
     }
 
+    // 防止手機連點放大 - 阻止雙擊縮放
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (event) {
+      const now = Date.now();
+      if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+      }
+      lastTouchEnd = now;
+    }, false);
+
+    // 防止手機連點放大 - 阻止手勢縮放
+    document.addEventListener('gesturestart', function (e) {
+      e.preventDefault();
+    });
+
+    document.addEventListener('gesturechange', function (e) {
+      e.preventDefault();
+    });
+
+    document.addEventListener('gestureend', function (e) {
+      e.preventDefault();
+    });
+
     // 初始化
     document.addEventListener('DOMContentLoaded', () => {
       // 回車鍵登錄
@@ -2520,6 +2723,21 @@
         if (e.key === 'Enter') {
           loginOrRegister();
         }
+      });
+
+      // 為所有按鈕添加 touch-action 防止縮放
+      const buttons = document.querySelectorAll('button, .click-button');
+      buttons.forEach(button => {
+        button.style.touchAction = 'manipulation';
+        // 阻止雙擊縮放
+        let lastClick = 0;
+        button.addEventListener('touchend', function(e) {
+          const now = Date.now();
+          if (now - lastClick < 300) {
+            e.preventDefault();
+          }
+          lastClick = now;
+        });
       });
 
       // 點擊模態框外部關閉
