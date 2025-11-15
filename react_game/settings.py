@@ -125,9 +125,17 @@ def get_ssl_mode(hostname=None):
 def parse_database_url(database_url):
     """解析 DATABASE_URL 連接字串"""
     try:
+        # 如果是 SQLite URL，返回 None（讓它使用 SQLite 設定）
+        if database_url.startswith('sqlite://') or database_url.startswith('sqlite3://'):
+            return None
+        
         # 處理 postgres:// 和 postgresql:// 兩種格式
         if database_url.startswith('postgres://'):
             database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        
+        # 如果不是 PostgreSQL URL，返回 None
+        if not database_url.startswith('postgresql://'):
+            return None
         
         parsed = urlparse(database_url)
         
