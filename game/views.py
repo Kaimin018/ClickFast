@@ -195,7 +195,7 @@ def api_get_profile(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_submit_game(request):
-    """提交遊戲結果"""
+    """提交遊戲結果（優化版：快速儲存）"""
     if not request.user.is_authenticated:
         return JsonResponse({'error': '未登錄'}, status=401)
     
@@ -204,9 +204,19 @@ def api_submit_game(request):
         clicks = int(data.get('clicks', 0))
         game_duration = float(data.get('game_duration', 10.0))
         
-        profile = get_or_create_profile(request.user)
-        
         with transaction.atomic():
+            # 使用 select_for_update 鎖定資料行，確保資料一致性
+            profile = PlayerProfile.objects.select_for_update().get_or_create(
+                user=request.user,
+                defaults={
+                    'coins': 0,
+                    'total_clicks': 0,
+                    'best_clicks_per_round': 0,
+                    'total_games_played': 0,
+                    'battle_wins': 0,
+                }
+            )[0]
+            
             # 計算金幣
             # 基礎時間（10秒）內：每次點擊1金幣
             # 延長時間（由商店物品升級增加的秒數）內：每次點擊2金幣（基礎時間的兩倍）
@@ -222,38 +232,52 @@ def api_submit_game(request):
                 extra_clicks = clicks - base_clicks
                 coins_earned = base_clicks + (extra_clicks * 2)
             
-            # 創建遊戲記錄
+            # 更新玩家資料（先更新數值，稍後一次性儲存）
+            profile.coins += coins_earned
+            profile.total_clicks += clicks
+            profile.total_games_played += 1
+            update_fields = ['coins', 'total_clicks', 'total_games_played']
+            if clicks > profile.best_clicks_per_round:
+                profile.best_clicks_per_round = clicks
+                update_fields.append('best_clicks_per_round')
+            
+            # 檢查成就（優化版：合併成就獎勵到 profile 更新中）
+            new_achievements, total_reward_coins = check_achievements_optimized(
+                request.user, profile, clicks
+            )
+            
+            # 如果有成就獎勵，加到金幣中（coins 已在 update_fields 中）
+            if total_reward_coins > 0:
+                profile.coins += total_reward_coins
+            
+            # 一次性儲存所有更新（使用 update_fields 只更新需要的欄位）
+            profile.save(update_fields=update_fields)
+            
+            # 創建遊戲記錄（在 transaction 內，確保資料一致性）
             session = GameSession.objects.create(
                 user=request.user,
                 clicks=clicks,
                 game_duration=game_duration,
                 coins_earned=coins_earned
             )
-            
-            # 更新玩家資料
-            profile.coins += coins_earned
-            profile.total_clicks += clicks
-            profile.total_games_played += 1
-            if clicks > profile.best_clicks_per_round:
-                profile.best_clicks_per_round = clicks
-            profile.save()
-            
-            # 檢查成就
-            new_achievements = check_achievements(request.user, profile, clicks)
-            
-            # 優化：直接返回最新的歷史記錄，避免前端再次請求
-            # 只查詢最新的 10 筆記錄（與前端 loadHistory 的 limit 一致）
-            recent_sessions = GameSession.objects.filter(user=request.user).order_by('-played_at')[:10]
-            recent_history = [
-                {
-                    'clicks': s.clicks,
-                    'game_duration': s.game_duration,
-                    'coins_earned': s.coins_earned,
-                    'played_at': s.played_at.isoformat(),
-                }
-                for s in recent_sessions
-            ]
-            
+        
+        # 優化：在 transaction 外查詢歷史記錄，減少鎖定時間
+        # 只查詢最新的 10 筆記錄（與前端 loadHistory 的 limit 一致）
+        recent_sessions = GameSession.objects.filter(
+            user=request.user
+        ).order_by('-played_at')[:10].values(
+            'clicks', 'game_duration', 'coins_earned', 'played_at'
+        )
+        recent_history = [
+            {
+                'clicks': s['clicks'],
+                'game_duration': s['game_duration'],
+                'coins_earned': s['coins_earned'],
+                'played_at': s['played_at'].isoformat(),
+            }
+            for s in recent_sessions
+        ]
+        
         return JsonResponse({
             'success': True,
             'coins_earned': coins_earned,
@@ -274,8 +298,67 @@ def api_submit_game(request):
         return JsonResponse({'error': error_message}, status=500)
 
 
+def check_achievements_optimized(user, profile, current_clicks):
+    """檢查並解鎖成就（優化版：批量處理，減少資料庫寫入）"""
+    new_achievements = []
+    total_reward_coins = 0
+    player_achievements_to_create = []
+    
+    # 優化：一次性查詢所有成就和已解鎖的成就ID
+    all_achievements = Achievement.objects.all()
+    unlocked_achievement_ids = set(
+        PlayerAchievement.objects.filter(user=user)
+        .values_list('achievement_id', flat=True)
+    )
+    
+    for achievement in all_achievements:
+        # 檢查是否已解鎖（使用集合查找，O(1) 時間複雜度）
+        if achievement.id in unlocked_achievement_ids:
+            continue
+        
+        # 檢查是否達到目標
+        unlocked = False
+        if achievement.achievement_type == 'total_clicks':
+            if profile.total_clicks >= achievement.target_value:
+                unlocked = True
+        elif achievement.achievement_type == 'single_round':
+            if current_clicks >= achievement.target_value:
+                unlocked = True
+        elif achievement.achievement_type == 'total_games':
+            if profile.total_games_played >= achievement.target_value:
+                unlocked = True
+        
+        if unlocked:
+            # 累積獎勵金幣
+            if achievement.reward_coins > 0:
+                total_reward_coins += achievement.reward_coins
+            
+            # 準備批量創建成就記錄
+            player_achievements_to_create.append(
+                PlayerAchievement(
+                    user=user,
+                    achievement=achievement,
+                    reward_claimed=(achievement.reward_coins > 0)
+                )
+            )
+            
+            new_achievements.append({
+                'id': achievement.id,
+                'name': achievement.name,
+                'description': achievement.description,
+                'icon': achievement.icon,
+                'reward_coins': achievement.reward_coins,
+            })
+    
+    # 優化：批量創建成就記錄，減少資料庫寫入次數
+    if player_achievements_to_create:
+        PlayerAchievement.objects.bulk_create(player_achievements_to_create)
+    
+    return new_achievements, total_reward_coins
+
+
 def check_achievements(user, profile, current_clicks):
-    """檢查並解鎖成就"""
+    """檢查並解鎖成就（舊版，保留以向後兼容）"""
     new_achievements = []
     
     # 獲取所有成就
@@ -392,7 +475,7 @@ def api_get_shop(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_purchase_item(request):
-    """購買商店物品"""
+    """購買商店物品（優化版：減少資料庫查詢）"""
     if not request.user.is_authenticated:
         return JsonResponse({'error': '未登錄'}, status=401)
     
@@ -400,43 +483,77 @@ def api_purchase_item(request):
         data = json.loads(request.body)
         item_id = int(data.get('item_id'))
         
+        # 優化：在 transaction 外查詢 ShopItem（靜態資料，不需要鎖定）
         shop_item = ShopItem.objects.get(id=item_id)
-        profile = get_or_create_profile(request.user)
         
-        # 對於自動點擊器，檢查前置條件（需要額外點擊按鈕）
+        # 優化：預先查詢相關物品（靜態資料，不需要鎖定）
+        related_items = {}
+        shop_item_ids_to_query = [item_id]
+        
+        # 只在需要時查詢相關物品
         if shop_item.item_type == 'auto_clicker':
+            # 購買自動點擊器時，需要檢查額外點擊按鈕
             extra_button_item = ShopItem.objects.filter(item_type='extra_button').first()
             if extra_button_item:
-                extra_button_purchase = PlayerPurchase.objects.filter(
-                    user=request.user,
-                    shop_item=extra_button_item
-                ).first()
-                if not extra_button_purchase or extra_button_purchase.level == 0:
-                    return JsonResponse({'error': '需要先購買「額外點擊按鈕」才能購買自動點擊器'}, status=400)
-        
-        # 獲取當前購買記錄
-        purchase = PlayerPurchase.objects.filter(user=request.user, shop_item=shop_item).first()
-        current_level = purchase.level if purchase else 0
-        
-        if current_level >= shop_item.max_level:
-            return JsonResponse({'error': '已達到最大等級'}, status=400)
-        
-        # 計算價格
-        price = shop_item.base_price * (current_level + 1)
-        
-        if profile.coins < price:
-            return JsonResponse({'error': '金幣不足'}, status=400)
+                related_items['extra_button'] = extra_button_item
+                shop_item_ids_to_query.append(extra_button_item.id)
+        elif shop_item.item_type == 'extra_button':
+            # 購買額外點擊按鈕時，可能需要創建自動點擊器
+            auto_clicker_item = ShopItem.objects.filter(item_type='auto_clicker').first()
+            if auto_clicker_item:
+                related_items['auto_clicker'] = auto_clicker_item
+                shop_item_ids_to_query.append(auto_clicker_item.id)
         
         with transaction.atomic():
+            # 使用 select_for_update 鎖定資料行，確保資料一致性
+            profile = PlayerProfile.objects.select_for_update().get_or_create(
+                user=request.user,
+                defaults={
+                    'coins': 0,
+                    'total_clicks': 0,
+                    'best_clicks_per_round': 0,
+                    'total_games_played': 0,
+                    'battle_wins': 0,
+                }
+            )[0]
+            
+            # 優化：一次性查詢所有相關的購買記錄，避免多次查詢
+            purchase_queryset = PlayerPurchase.objects.filter(
+                user=request.user,
+                shop_item_id__in=shop_item_ids_to_query
+            ).select_related('shop_item')
+            purchases_dict = {purchase.shop_item_id: purchase for purchase in purchase_queryset}
+            
+            # 獲取當前購買記錄
+            purchase = purchases_dict.get(item_id)
+            current_level = purchase.level if purchase else 0
+            
+            # 對於自動點擊器，檢查前置條件（需要額外點擊按鈕）
+            if shop_item.item_type == 'auto_clicker':
+                extra_button_item = related_items.get('extra_button')
+                if extra_button_item:
+                    extra_button_purchase = purchases_dict.get(extra_button_item.id)
+                    if not extra_button_purchase or extra_button_purchase.level == 0:
+                        return JsonResponse({'error': '需要先購買「額外點擊按鈕」才能購買自動點擊器'}, status=400)
+            
+            if current_level >= shop_item.max_level:
+                return JsonResponse({'error': '已達到最大等級'}, status=400)
+            
+            # 計算價格
+            price = shop_item.base_price * (current_level + 1)
+            
+            if profile.coins < price:
+                return JsonResponse({'error': '金幣不足'}, status=400)
+            
             # 扣除金幣
             profile.coins -= price
-            profile.save()
+            profile.save(update_fields=['coins'])
             
             # 更新或創建購買記錄
             if purchase:
                 purchase.level += 1
                 purchase.price_paid = price
-                purchase.save()
+                purchase.save(update_fields=['level', 'price_paid'])
             else:
                 purchase = PlayerPurchase.objects.create(
                     user=request.user,
@@ -447,13 +564,9 @@ def api_purchase_item(request):
             
             # 如果購買的是額外點擊按鈕，自動附加1等級的自動點擊器
             if shop_item.item_type == 'extra_button' and purchase.level == 1:
-                # 檢查是否已有自動點擊器
-                auto_clicker_item = ShopItem.objects.filter(item_type='auto_clicker').first()
+                auto_clicker_item = related_items.get('auto_clicker')
                 if auto_clicker_item:
-                    auto_clicker_purchase = PlayerPurchase.objects.filter(
-                        user=request.user,
-                        shop_item=auto_clicker_item
-                    ).first()
+                    auto_clicker_purchase = purchases_dict.get(auto_clicker_item.id)
                     
                     # 如果沒有自動點擊器，創建1等級的自動點擊器
                     if not auto_clicker_purchase:
