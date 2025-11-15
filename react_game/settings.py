@@ -103,8 +103,12 @@ WSGI_APPLICATION = 'react_game.wsgi.application'
 
 def normalize_hostname(hostname):
     """將 localhost 轉換為 127.0.0.1，強制使用 TCP/IP 而不是 Unix socket"""
-    if not hostname:
-        return hostname
+    # 在 CI 環境中，如果 hostname 為 None 或 localhost，都轉換為 127.0.0.1
+    is_ci = os.getenv('GITHUB_ACTIONS') or os.getenv('CI')
+    if is_ci:
+        if not hostname or hostname == 'localhost':
+            return '127.0.0.1'
+    # 非 CI 環境中，只轉換 localhost
     if hostname == 'localhost':
         return '127.0.0.1'
     return hostname
@@ -131,17 +135,27 @@ def parse_database_url(database_url):
         # 這在 Docker 容器環境（如 GitHub Actions）中是必要的
         hostname = normalize_hostname(parsed.hostname)
         
+        # 確保 HOST 不為空（空值會導致 psycopg2 使用 Unix socket）
+        # 如果 hostname 仍然為空（不應該發生，但作為安全措施），在 CI 環境中使用 127.0.0.1
+        if not hostname:
+            is_ci = os.getenv('GITHUB_ACTIONS') or os.getenv('CI')
+            if is_ci:
+                hostname = '127.0.0.1'
+        
+        # 構建 OPTIONS，確保在 CI 環境中強制使用 TCP/IP
+        options = {
+            'connect_timeout': 10,
+            'sslmode': get_ssl_mode(hostname),  # CI 環境和 localhost 不使用 SSL，雲端服務使用 SSL
+        }
+        
         return {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': parsed.path[1:] if parsed.path.startswith('/') else parsed.path,  # 移除開頭的 /
             'USER': parsed.username,
             'PASSWORD': parsed.password,
-            'HOST': hostname,
+            'HOST': hostname,  # 必須設置為非空值，否則會使用 Unix socket
             'PORT': parsed.port or '5432',
-            'OPTIONS': {
-                'connect_timeout': 10,
-                'sslmode': get_ssl_mode(hostname),  # CI 環境和 localhost 不使用 SSL，雲端服務使用 SSL
-            },
+            'OPTIONS': options,
             'CONN_MAX_AGE': 600,  # 連接池：保持連接 10 分鐘，減少連接開銷
         }
     except Exception as e:

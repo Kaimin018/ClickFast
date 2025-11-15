@@ -49,28 +49,28 @@ jobs:
 
     - name: 運行資料庫遷移
       env:
-        DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+        DATABASE_URL: postgresql://testuser:testpass@127.0.0.1:5432/testdb
         DJANGO_SETTINGS_MODULE: react_game.settings
       run: |
         python manage.py migrate --noinput
 
     - name: 初始化遊戲資料
       env:
-        DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+        DATABASE_URL: postgresql://testuser:testpass@127.0.0.1:5432/testdb
         DJANGO_SETTINGS_MODULE: react_game.settings
       run: |
         python manage.py init_game_data
 
     - name: 運行 Django 測試（並行）
       env:
-        DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+        DATABASE_URL: postgresql://testuser:testpass@127.0.0.1:5432/testdb
         DJANGO_SETTINGS_MODULE: react_game.settings
       run: |
         python manage.py test game.Test_Cases.test_case_01_game_flow --verbosity=2 --parallel 4 --keepdb
 
     - name: 生成測試覆蓋率報告（並行）
       env:
-        DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+        DATABASE_URL: postgresql://testuser:testpass@127.0.0.1:5432/testdb
         DJANGO_SETTINGS_MODULE: react_game.settings
       run: |
         coverage run --source='.' --parallel-mode manage.py test game.Test_Cases.test_case_01_game_flow --parallel 4 --keepdb
