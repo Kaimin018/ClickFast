@@ -25,6 +25,10 @@ def handle_database_error(e):
         return '無法連接到資料庫伺服器，請稍後再試。如果問題持續存在，可能是資料庫服務暫時無法使用。'
     elif 'operationalerror' in error_str or 'database' in error_str:
         return '資料庫操作失敗，請稍後再試。'
+    elif 'pattern' in error_str or 'expected pattern' in error_str:
+        return '資料格式驗證失敗，請重新整理頁面後再試。'
+    elif 'valueerror' in error_str or 'typeerror' in error_str:
+        return '參數格式錯誤，請重新整理頁面後再試。'
     else:
         # 對於其他錯誤，返回原始錯誤訊息（但簡化技術細節）
         return str(e)
@@ -54,7 +58,11 @@ def get_or_create_profile(user):
 def api_login_or_register(request):
     """登錄或註冊用戶"""
     try:
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': '無效的 JSON 格式'}, status=400)
+        
         username = data.get('username', '').strip()
         
         if not username:
@@ -200,9 +208,33 @@ def api_submit_game(request):
         return JsonResponse({'error': '未登錄'}, status=401)
     
     try:
-        data = json.loads(request.body)
-        clicks = int(data.get('clicks', 0))
-        game_duration = float(data.get('game_duration', 10.0))
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': '無效的 JSON 格式'}, status=400)
+        
+        # 驗證 clicks 參數
+        clicks_str = data.get('clicks')
+        if clicks_str is None:
+            return JsonResponse({'error': '缺少點擊數參數'}, status=400)
+        try:
+            clicks = int(clicks_str)
+            if clicks < 0:
+                return JsonResponse({'error': '點擊數不能為負數'}, status=400)
+        except (ValueError, TypeError):
+            return JsonResponse({'error': '無效的點擊數格式'}, status=400)
+        
+        # 驗證 game_duration 參數
+        game_duration_str = data.get('game_duration')
+        if game_duration_str is None:
+            game_duration = 10.0  # 預設值
+        else:
+            try:
+                game_duration = float(game_duration_str)
+                if game_duration <= 0:
+                    return JsonResponse({'error': '遊戲時長必須大於0'}, status=400)
+            except (ValueError, TypeError):
+                return JsonResponse({'error': '無效的遊戲時長格式'}, status=400)
         
         with transaction.atomic():
             # 使用 select_for_update 鎖定資料行，確保資料一致性
@@ -480,8 +512,21 @@ def api_purchase_item(request):
         return JsonResponse({'error': '未登錄'}, status=401)
     
     try:
-        data = json.loads(request.body)
-        item_id = int(data.get('item_id'))
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': '無效的 JSON 格式'}, status=400)
+        
+        item_id_str = data.get('item_id')
+        
+        # 驗證 item_id 是否存在且為有效數字
+        if item_id_str is None:
+            return JsonResponse({'error': '缺少物品ID參數'}, status=400)
+        
+        try:
+            item_id = int(item_id_str)
+        except (ValueError, TypeError):
+            return JsonResponse({'error': '無效的物品ID格式'}, status=400)
         
         # 優化：在 transaction 外查詢 ShopItem（靜態資料，不需要鎖定）
         shop_item = ShopItem.objects.get(id=item_id)
@@ -626,7 +671,16 @@ def api_get_game_history(request):
     if not request.user.is_authenticated:
         return JsonResponse({'error': '未登錄'}, status=401)
     
-    limit = int(request.GET.get('limit', 10))
+    # 驗證 limit 參數
+    limit_str = request.GET.get('limit', '10')
+    try:
+        limit = int(limit_str)
+        if limit < 1:
+            return JsonResponse({'error': 'limit 必須大於0'}, status=400)
+        if limit > 100:
+            return JsonResponse({'error': 'limit 不能超過100'}, status=400)
+    except (ValueError, TypeError):
+        return JsonResponse({'error': '無效的 limit 格式'}, status=400)
     # 使用 order_by 確保使用索引（模型 Meta 中已定義 ordering，但明確指定更安全）
     sessions = GameSession.objects.filter(user=request.user).order_by('-played_at')[:limit]
     
@@ -651,10 +705,31 @@ def api_update_badges(request):
         return JsonResponse({'error': '未登錄'}, status=401)
     
     try:
-        data = json.loads(request.body)
-        badge_1_id = data.get('badge_1_id')
-        badge_2_id = data.get('badge_2_id')
-        badge_3_id = data.get('badge_3_id')
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': '無效的 JSON 格式'}, status=400)
+        
+        # 驗證並轉換徽章ID參數
+        badge_1_id = None
+        badge_2_id = None
+        badge_3_id = None
+        
+        for i, badge_key in enumerate(['badge_1_id', 'badge_2_id', 'badge_3_id'], 1):
+            badge_value = data.get(badge_key)
+            if badge_value is not None:
+                try:
+                    badge_id = int(badge_value)
+                    if badge_id < 1:
+                        return JsonResponse({'error': f'徽章{i} ID 必須大於0'}, status=400)
+                    if i == 1:
+                        badge_1_id = badge_id
+                    elif i == 2:
+                        badge_2_id = badge_id
+                    else:
+                        badge_3_id = badge_id
+                except (ValueError, TypeError):
+                    return JsonResponse({'error': f'無效的徽章{i} ID 格式'}, status=400)
         
         profile = get_or_create_profile(request.user)
         
@@ -713,9 +788,30 @@ def api_rollback_shop_level(request):
         return JsonResponse({'error': '無權限訪問'}, status=403)
     
     try:
-        data = json.loads(request.body)
-        item_id = int(data.get('item_id'))
-        target_level = int(data.get('target_level', 0))
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': '無效的 JSON 格式'}, status=400)
+        
+        # 驗證 item_id 參數
+        item_id_str = data.get('item_id')
+        if item_id_str is None:
+            return JsonResponse({'error': '缺少物品ID參數'}, status=400)
+        try:
+            item_id = int(item_id_str)
+        except (ValueError, TypeError):
+            return JsonResponse({'error': '無效的物品ID格式'}, status=400)
+        
+        # 驗證 target_level 參數
+        target_level_str = data.get('target_level')
+        if target_level_str is None:
+            return JsonResponse({'error': '缺少目標等級參數'}, status=400)
+        try:
+            target_level = int(target_level_str)
+            if target_level < 0:
+                return JsonResponse({'error': '目標等級不能為負數'}, status=400)
+        except (ValueError, TypeError):
+            return JsonResponse({'error': '無效的目標等級格式'}, status=400)
         
         shop_item = ShopItem.objects.get(id=item_id)
         profile = get_or_create_profile(request.user)

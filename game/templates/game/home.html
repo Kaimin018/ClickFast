@@ -1323,9 +1323,11 @@
       }
 
       .settings-dropdown {
-        right: auto;
-        left: 0;
+        right: 0;
+        left: auto;
         min-width: 120px;
+        max-width: calc(100vw - 60px);
+        white-space: nowrap;
       }
 
       .click-button {
@@ -1694,6 +1696,39 @@
   </div>
 
   <script>
+    // 立即檢查登入狀態（在腳本開始時執行，避免閃爍）
+    (function() {
+      // 使用立即執行函數，在 DOM 解析時就嘗試執行
+      function checkLoginState() {
+        const savedUsername = localStorage.getItem('clickfast_username');
+        const isLoggedIn = localStorage.getItem('clickfast_logged_in') === 'true';
+        
+        if (savedUsername && isLoggedIn) {
+          // 如果 DOM 已載入，立即調整 UI
+          if (document.readyState === 'loading') {
+            // DOM 還在載入，監聽 DOMContentLoaded
+            document.addEventListener('DOMContentLoaded', applyLoginState);
+          } else {
+            // DOM 已載入，立即執行
+            applyLoginState();
+          }
+        }
+      }
+      
+      function applyLoginState() {
+        const loginPanel = document.getElementById('loginPanel');
+        const gameContent = document.getElementById('gameContent');
+        const userInfo = document.getElementById('userInfo');
+        
+        if (loginPanel) loginPanel.style.display = 'none';
+        if (gameContent) gameContent.style.display = 'block';
+        if (userInfo) userInfo.style.display = 'flex';
+      }
+      
+      // 立即執行檢查
+      checkLoginState();
+    })();
+
     // 遊戲狀態
     let gameState = {
       isPlaying: false,
@@ -3152,7 +3187,7 @@
         }
       });
 
-      // 嘗試加載已有資料
+      // 嘗試加載已有資料（立即執行，不等待）
       loadProfile();
     });
   </script>
