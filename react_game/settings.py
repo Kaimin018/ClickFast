@@ -260,6 +260,27 @@ class SkipUnauthorizedFilter(logging.Filter):
                     return False  # 過濾掉這個日誌
         return True  # 保留其他日誌
 
+class SkipBrokenPipeFilter(logging.Filter):
+    """過濾掉 Broken pipe 訊息（Selenium 測試中常見且無害）"""
+    def filter(self, record):
+        # 檢查是否是 Broken pipe 訊息
+        if hasattr(record, 'msg') and isinstance(record.msg, str):
+            if 'Broken pipe' in record.msg or 'ConnectionResetError' in str(record.getMessage()):
+                return False  # 過濾掉這個日誌
+        return True  # 保留其他日誌
+
+class SafeFormatter(logging.Formatter):
+    """安全的格式化器，處理缺少欄位的情況"""
+    def format(self, record):
+        # 如果缺少 method 或 path 欄位，使用簡單格式
+        if not hasattr(record, 'method') or not hasattr(record, 'path'):
+            # 使用簡單格式避免 KeyError
+            simple_format = '[{asctime}] {levelname} {message}'
+            formatter = logging.Formatter(simple_format, style='{')
+            return formatter.format(record)
+        # 否則使用預設格式
+        return super().format(record)
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -267,10 +288,18 @@ LOGGING = {
         'skip_unauthorized': {
             '()': SkipUnauthorizedFilter,
         },
+        'skip_broken_pipe': {
+            '()': SkipBrokenPipeFilter,
+        },
     },
     'formatters': {
         'default': {
+            '()': SafeFormatter,  # 使用自定義格式化器
             'format': '[{asctime}] "{method} {path} HTTP/1.1" {status_code} {size}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '[{asctime}] {levelname} {message}',
             'style': '{',
         },
     },
@@ -280,12 +309,22 @@ LOGGING = {
             'filters': ['skip_unauthorized'],
             'formatter': 'default',
         },
+        'simple_console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
     },
     'loggers': {
         'django.server': {
             'handlers': ['console'],
             'level': 'INFO',
             'propagate': False,
+        },
+        'django.core.servers.basehttp': {
+            'handlers': ['simple_console'],
+            'level': 'WARNING',  # 只記錄警告及以上級別，忽略 INFO 級別的 Broken pipe
+            'propagate': False,
+            'filters': ['skip_broken_pipe'],  # 過濾掉 Broken pipe 訊息
         },
     },
 }

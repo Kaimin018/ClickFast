@@ -27,8 +27,8 @@ ClickFast 是一個快節奏的點擊遊戲！在時限內盡可能多地點擊�
 
 ## 立即遊玩
 
-- 👉 [ClickFast on Render](https://clickfast.onrender.com)
 - 👉 [ClickFast on Vercel](https://click-fast.vercel.app/)
+- 👉 [ClickFast on Render](https://clickfast.onrender.com)
 
 ## 技術棧
 

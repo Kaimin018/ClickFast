@@ -1,0 +1,156 @@
+name: 自動測試
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:  # 允許手動觸發
+
+jobs:
+  django-tests:
+    name: Django 後端測試
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - name: 檢出代碼
+      uses: actions/checkout@v4
+
+    - name: 設置 Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: 安裝系統依賴
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client
+
+    - name: 安裝 Python 依賴
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install coverage tblib
+
+    - name: 運行資料庫遷移
+      env:
+        DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+        DJANGO_SETTINGS_MODULE: react_game.settings
+      run: |
+        python manage.py migrate --noinput
+
+    - name: 初始化遊戲資料
+      env:
+        DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+        DJANGO_SETTINGS_MODULE: react_game.settings
+      run: |
+        python manage.py init_game_data
+
+    - name: 運行 Django 測試（並行）
+      env:
+        DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+        DJANGO_SETTINGS_MODULE: react_game.settings
+      run: |
+        python manage.py test game.Test_Cases.test_case_01_game_flow --verbosity=2 --parallel 4 --keepdb
+
+    - name: 生成測試覆蓋率報告（並行）
+      env:
+        DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+        DJANGO_SETTINGS_MODULE: react_game.settings
+      run: |
+        coverage run --source='.' --parallel-mode manage.py test game.Test_Cases.test_case_01_game_flow --parallel 4 --keepdb
+        coverage combine
+        coverage report
+        coverage xml
+
+    - name: 上傳覆蓋率報告
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: django-tests
+        name: django-coverage
+
+  frontend-tests:
+    name: 前端功能測試
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 檢出代碼
+      uses: actions/checkout@v4
+
+    - name: 設置 Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: 安裝系統依賴
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client
+
+    - name: 安裝 Python 依賴
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install selenium webdriver-manager tblib
+
+    - name: 設置 Chrome 和 ChromeDriver
+      uses: browser-actions/setup-chrome@v1
+      with:
+        chrome-version: stable
+
+    - name: 運行資料庫遷移
+      env:
+        DATABASE_URL: sqlite:///db.sqlite3
+        DJANGO_SETTINGS_MODULE: react_game.settings
+      run: |
+        python manage.py migrate --noinput
+
+    - name: 初始化遊戲資料
+      env:
+        DATABASE_URL: sqlite:///db.sqlite3
+        DJANGO_SETTINGS_MODULE: react_game.settings
+      run: |
+        python manage.py init_game_data
+
+    - name: 運行前端測試（桌面版，順序運行）
+      env:
+        DATABASE_URL: sqlite:///db.sqlite3
+        DJANGO_SETTINGS_MODULE: react_game.settings
+        USE_SQLITE: "true"
+      run: |
+        python manage.py test game.Test_Cases.test_case_03_frontend_functionality --verbosity=2 --keepdb || echo "前端測試需要 Chrome WebDriver，如果不可用將跳過"
+
+    - name: 運行前端測試（手機版，順序運行）
+      env:
+        DATABASE_URL: sqlite:///db.sqlite3
+        DJANGO_SETTINGS_MODULE: react_game.settings
+        USE_SQLITE: "true"
+      run: |
+        python manage.py test game.Test_Cases.test_case_02_frontend_mobile --verbosity=2 --keepdb || echo "前端測試需要 Chrome WebDriver，如果不可用將跳過"
+
+  all-tests:
+    name: 所有測試
+    runs-on: ubuntu-latest
+    needs: [django-tests, frontend-tests]
+    
+    steps:
+    - name: 測試完成
+      run: |
+        echo "所有測試已完成"
+

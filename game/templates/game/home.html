@@ -1136,163 +1136,214 @@
 
     @media (max-width: 768px) {
       body {
-        padding: 10px;
+        padding: 8px;
+      }
+
+      .container {
+        max-width: 100%;
       }
 
       .main-content {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 12px;
+        margin-bottom: 12px;
       }
 
       .header {
         flex-direction: column;
         text-align: center;
-        padding: 15px;
-        gap: 10px;
+        padding: 12px;
+        gap: 8px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+      }
+
+      .header h1 {
+        font-size: 24px;
+        margin-bottom: 8px;
       }
 
       .user-info {
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: wrap;
         width: 100%;
-        gap: 10px;
+        gap: 8px;
+        justify-content: center;
+        align-items: center;
       }
 
       .stat-item {
-        font-size: 14px;
+        font-size: 13px;
+        gap: 4px;
+        padding: 4px 8px;
+        background: #f8f9fa;
+        border-radius: 6px;
       }
 
       .coins {
-        font-size: 20px;
+        font-size: 18px;
       }
 
       .panel {
-        padding: 15px;
+        padding: 12px;
+        border-radius: 8px;
       }
 
       .panel h2 {
         font-size: 18px;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
       }
 
       .game-container {
-        min-height: 350px;
-        padding: 10px;
+        min-height: auto;
+        padding: 8px;
+        position: relative;
       }
 
       .badges-container-game {
-        top: 10px;
-        right: 10px;
-        gap: 5px;
+        top: 8px;
+        right: 8px;
+        gap: 4px;
       }
 
       .badge-slot {
-        width: 40px;
-        height: 40px;
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
       }
 
       .badge-icon {
-        font-size: 22px;
+        font-size: 20px;
+      }
+
+      .game-container h2 {
+        font-size: 18px;
+        margin: 8px 0 12px 0;
       }
 
       .super-account-controls {
-        width: 95%;
-        padding: 12px;
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 8px;
       }
 
       .super-account-controls .controls-row {
         flex-direction: column;
-        gap: 15px;
+        gap: 12px;
       }
 
       .super-account-controls .shop-rollback-control {
         padding-left: 0;
         border-left: none;
-        padding-top: 15px;
+        padding-top: 12px;
         border-top: 2px solid #d0d0d0;
       }
 
       .username-display {
         margin-right: 0;
-        margin-bottom: 10px;
-        font-size: 16px;
-        padding: 6px 12px;
+        margin-bottom: 0;
+        font-size: 14px;
+        padding: 5px 10px;
       }
 
       .settings-container {
         margin-left: 0;
-        margin-top: 10px;
+        margin-top: 0;
+      }
+
+      .settings-btn {
+        font-size: 13px;
+        padding: 5px 10px;
       }
 
       .settings-dropdown {
         right: auto;
         left: 0;
+        min-width: 120px;
       }
 
       .click-button {
-        padding: 35px 50px;
-        font-size: 22px;
-        min-width: 200px;
+        padding: 40px 30px;
+        font-size: 20px;
+        min-width: 100%;
         width: 100%;
-        max-width: 300px;
+        max-width: 100%;
         /* 手機上更大的觸控區域 */
-        min-height: 70px;
+        min-height: 80px;
+        border-radius: 16px;
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4),
+                    0 3px 6px rgba(0, 0, 0, 0.1);
       }
 
       .click-button.auto-click-button {
-        padding: 20px 30px;
-        font-size: 16px;
-        min-width: 140px;
-        min-height: 60px;
+        padding: 18px 20px;
+        font-size: 14px;
+        min-width: calc(50% - 4px);
+        min-height: 55px;
+        border-radius: 12px;
       }
 
       .click-buttons-container {
-        gap: 15px;
-        margin: 15px 0;
+        gap: 12px;
+        margin: 12px 0;
+        padding: 0 4px;
       }
 
       .auto-click-buttons-wrapper {
         gap: 8px;
         width: 100%;
-        justify-content: center;
+        justify-content: space-between;
       }
 
       .timer {
-        font-size: 28px;
-        margin: 12px 0;
+        font-size: 32px;
+        margin: 10px 0;
+        font-weight: bold;
+        color: #667eea;
       }
 
       .clicks-display {
-        font-size: 42px;
-        margin: 20px 0;
+        font-size: 48px;
+        margin: 15px 0;
+        line-height: 1.2;
       }
 
       .game-controls {
-        margin: 15px 0;
+        margin: 12px 0;
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
         justify-content: center;
       }
 
       .btn {
-        padding: 12px 20px;
-        font-size: 15px;
+        padding: 10px 16px;
+        font-size: 14px;
         margin: 0;
         flex: 1;
-        min-width: 100px;
-        max-width: 150px;
+        min-width: calc(33.333% - 4px);
+        max-width: calc(33.333% - 4px);
+        border-radius: 8px;
       }
 
       .auto-clicker-info {
-        font-size: 13px;
+        font-size: 12px;
         padding: 8px;
         margin: 8px 0;
+        border-radius: 6px;
+        text-align: center;
       }
 
       .modal-content {
-        padding: 20px;
+        padding: 16px;
         width: 95%;
         max-height: 85vh;
+        border-radius: 12px;
+      }
+
+      .modal-header {
+        margin-bottom: 15px;
       }
 
       .modal-header h2 {
@@ -1301,6 +1352,7 @@
 
       .shop-item {
         padding: 12px;
+        border-radius: 8px;
       }
 
       .shop-item-name {
@@ -1308,23 +1360,30 @@
       }
 
       .achievements-grid {
-        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
         gap: 10px;
       }
 
       .achievement-icon {
-        font-size: 36px;
+        font-size: 32px;
       }
 
       .login-panel {
-        padding: 30px 20px;
+        padding: 25px 15px;
+      }
+
+      .login-panel h2 {
+        font-size: 20px;
+        margin-bottom: 15px;
       }
 
       .login-panel input {
         width: 100%;
-        max-width: 250px;
+        max-width: 100%;
         margin-right: 0;
         margin-bottom: 10px;
+        padding: 14px;
+        font-size: 16px;
         /* 允許輸入框選擇文字 */
         user-select: text;
         -webkit-user-select: text;
@@ -1332,7 +1391,23 @@
 
       .login-panel button {
         width: 100%;
-        max-width: 250px;
+        max-width: 100%;
+        padding: 14px;
+        font-size: 16px;
+      }
+
+      /* 歷史記錄面板優化 */
+      .panel:has(#historyContainer) {
+        padding: 10px;
+      }
+
+      #historyContainer table {
+        font-size: 12px;
+      }
+
+      #historyContainer th,
+      #historyContainer td {
+        padding: 6px 4px;
       }
     }
   </style>
@@ -1963,7 +2038,33 @@
       mainButtonText.className = 'button-text';
       mainButtonText.textContent = '點擊！';
       mainButton.appendChild(mainButtonText);
+      
+      // 同時支持點擊和觸控事件，確保手機快速連點正常
       mainButton.onclick = handleClick;
+      
+      // 使用 touchstart 立即響應，提供最佳快速連點體驗
+      // 將 touchStartTime 存儲在按鈕的數據屬性中，避免作用域問題
+      mainButton.addEventListener('touchstart', function(e) {
+        if (gameState.isPlaying) {
+          // 立即觸發點擊
+          handleClick(e);
+          // 記錄觸摸開始時間
+          this.dataset.touchStartTime = Date.now().toString();
+        }
+      }, { passive: true });
+      
+      // touchend 也處理，但只在 touchstart 後一定時間才觸發（避免重複）
+      mainButton.addEventListener('touchend', function(e) {
+        if (gameState.isPlaying) {
+          const touchStartTime = parseInt(this.dataset.touchStartTime || '0');
+          const now = Date.now();
+          // 如果 touchstart 和 touchend 間隔較長（>100ms），可能是單獨的點擊
+          if (touchStartTime > 0 && now - touchStartTime > 100) {
+            handleClick(e);
+          }
+        }
+      }, { passive: true });
+      
       mainButtonWrapper.appendChild(mainButton);
       container.appendChild(mainButtonWrapper);
 
@@ -2089,9 +2190,18 @@
       }
     }
 
-    // 處理點擊
+    // 處理點擊（優化快速連點響應）
+    let lastClickTime = 0;
     function handleClick(event) {
       if (!gameState.isPlaying) return;
+      
+      // 防止重複觸發（touchstart 和 touchend 可能都會觸發）
+      const now = Date.now();
+      if (now - lastClickTime < 50) {
+        return; // 50ms 內只處理一次
+      }
+      lastClickTime = now;
+      
       gameState.clicks++;
       updateClicksDisplay();
       
@@ -2107,11 +2217,11 @@
             : null;
         
         if (targetButton && targetButton.id === 'mainClickButton') {
-          // 觸發文字下沉上浮動畫
+          // 觸發文字下沉上浮動畫（使用較短的動畫時間以支持快速連點）
           targetButton.classList.add('click-text-animation');
           setTimeout(() => {
             targetButton.classList.remove('click-text-animation');
-          }, 400);
+          }, 300);
           
           // 觸發自動點擊特效（與自動點擊按鈕相同的特效）
           targetButton.classList.remove('auto-click-animation');
@@ -2122,7 +2232,7 @@
                 if (targetButton) {
                   targetButton.classList.remove('auto-click-animation');
                 }
-              }, 450);
+              }, 400);
             }
           });
         }
@@ -2693,14 +2803,33 @@
       container.innerHTML = html;
     }
 
-    // 防止手機連點放大 - 阻止雙擊縮放
+    // 防止手機連點放大 - 改進版：只阻止真正的雙擊縮放，不影響快速連點
     let lastTouchEnd = 0;
+    let lastTouchPosition = { x: 0, y: 0 };
     document.addEventListener('touchend', function (event) {
-      const now = Date.now();
-      if (now - lastTouchEnd <= 300) {
-        event.preventDefault();
+      // 只阻止非按鈕區域的快速雙擊（防止縮放）
+      const target = event.target;
+      const isButton = target.tagName === 'BUTTON' || target.closest('button') || target.closest('.click-button');
+      
+      if (!isButton) {
+        const now = Date.now();
+        const touch = event.changedTouches[0];
+        const currentPos = { x: touch.clientX, y: touch.clientY };
+        
+        // 計算距離（同一位置的雙擊才阻止）
+        const distance = Math.sqrt(
+          Math.pow(currentPos.x - lastTouchPosition.x, 2) + 
+          Math.pow(currentPos.y - lastTouchPosition.y, 2)
+        );
+        
+        // 只在同一位置（距離小於10px）且時間間隔小於300ms時才阻止
+        if (now - lastTouchEnd <= 300 && distance < 10) {
+          event.preventDefault();
+        }
+        
+        lastTouchPosition = currentPos;
+        lastTouchEnd = now;
       }
-      lastTouchEnd = now;
     }, false);
 
     // 防止手機連點放大 - 阻止手勢縮放
@@ -2725,19 +2854,11 @@
         }
       });
 
-      // 為所有按鈕添加 touch-action 防止縮放
+      // 為所有按鈕添加 touch-action 防止縮放，但不阻止快速連點
       const buttons = document.querySelectorAll('button, .click-button');
       buttons.forEach(button => {
         button.style.touchAction = 'manipulation';
-        // 阻止雙擊縮放
-        let lastClick = 0;
-        button.addEventListener('touchend', function(e) {
-          const now = Date.now();
-          if (now - lastClick < 300) {
-            e.preventDefault();
-          }
-          lastClick = now;
-        });
+        // 不阻止按鈕的快速連點，只設置 touch-action 即可
       });
 
       // 點擊模態框外部關閉
