@@ -1566,11 +1566,13 @@
 
     @media (max-width: 768px) {
       body {
-        padding: 8px;
+        padding: 0 8px 8px 8px; /* 移除頂部 padding，因為 header 會固定在頂部 */
       }
 
       .container {
         max-width: 100%;
+        /* 確保 sticky 定位在 container 內正常工作 */
+        position: relative;
       }
 
       .main-content {
@@ -1580,12 +1582,27 @@
       }
 
       .header {
+        position: sticky;
+        top: 0;
+        z-index: 1000; /* 確保在其他內容之上 */
         flex-direction: column;
         text-align: center;
         padding: 12px;
         gap: 8px;
         margin-bottom: 12px;
-        border-radius: 8px;
+        margin-top: 0; /* 確保貼齊頂部 */
+        border-radius: 0 0 8px 8px; /* 只保留底部圓角，頂部貼齊 */
+        /* 確保背景不透明，內容不會透過 */
+        background: white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06);
+        /* 優化手機端性能 */
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        /* 確保在 iOS Safari 上正常工作 */
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        /* 確保在 Android Chrome 上正常工作 */
+        will-change: transform;
       }
 
       .header h1 {
