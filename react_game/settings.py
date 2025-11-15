@@ -101,6 +101,23 @@ WSGI_APPLICATION = 'react_game.wsgi.application'
 # 使用環境變數配置資料庫，預設使用 PostgreSQL
 # 開發環境可以使用 SQLite3，但生產環境必須使用 PostgreSQL
 
+def normalize_hostname(hostname):
+    """將 localhost 轉換為 127.0.0.1，強制使用 TCP/IP 而不是 Unix socket"""
+    if not hostname:
+        return hostname
+    if hostname == 'localhost':
+        return '127.0.0.1'
+    return hostname
+
+def get_ssl_mode(hostname=None):
+    """根據環境決定 SSL 模式"""
+    # 判斷是否在 CI 環境
+    is_ci = os.getenv('GITHUB_ACTIONS') or os.getenv('CI')
+    # 判斷是否連接到 localhost
+    is_localhost = hostname and hostname in ('localhost', '127.0.0.1', '::1')
+    # 在 CI 環境或 localhost 連線時不使用 SSL，其他情況使用 SSL（適用於 Supabase 等雲端服務）
+    return 'disable' if (is_ci or is_localhost) else 'require'
+
 def parse_database_url(database_url):
     """解析 DATABASE_URL 連接字串"""
     try:
@@ -110,16 +127,20 @@ def parse_database_url(database_url):
         
         parsed = urlparse(database_url)
         
+        # 將 localhost 轉換為 127.0.0.1，強制使用 TCP/IP 而不是 Unix socket
+        # 這在 Docker 容器環境（如 GitHub Actions）中是必要的
+        hostname = normalize_hostname(parsed.hostname)
+        
         return {
             'ENGINE': 'django.db.backends.postgresql',
             'NAME': parsed.path[1:] if parsed.path.startswith('/') else parsed.path,  # 移除開頭的 /
             'USER': parsed.username,
             'PASSWORD': parsed.password,
-            'HOST': parsed.hostname,
+            'HOST': hostname,
             'PORT': parsed.port or '5432',
             'OPTIONS': {
                 'connect_timeout': 10,
-                'sslmode': 'require',  # 強制使用 SSL 連接（適用於 Supabase）
+                'sslmode': get_ssl_mode(hostname),  # CI 環境和 localhost 不使用 SSL，雲端服務使用 SSL
             },
             'CONN_MAX_AGE': 600,  # 連接池：保持連接 10 分鐘，減少連接開銷
         }
@@ -154,17 +175,18 @@ elif os.getenv('VERCEL'):
     # Vercel 環境：必須使用 PostgreSQL（Supabase 或其他雲端資料庫）
     # 檢查是否有設置個別資料庫環境變數
     if os.getenv('DB_HOST'):
+        db_host = normalize_hostname(os.getenv('DB_HOST'))
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
                 'NAME': os.getenv('DB_NAME', 'clickfast_db'),
                 'USER': os.getenv('DB_USER', 'postgres'),
                 'PASSWORD': os.getenv('DB_PASSWORD', ''),
-                'HOST': os.getenv('DB_HOST'),
+                'HOST': db_host,
                 'PORT': os.getenv('DB_PORT', '5432'),
                 'OPTIONS': {
                     'connect_timeout': 10,
-                    'sslmode': 'require',  # 強制使用 SSL 連接（適用於 Supabase）
+                    'sslmode': get_ssl_mode(db_host),  # CI 環境和 localhost 不使用 SSL，雲端服務使用 SSL
                 },
                 'CONN_MAX_AGE': 600,  # 連接池：保持連接 10 分鐘，減少連接開銷
             }
@@ -181,16 +203,17 @@ else:
     # 其他環境（Render 等）：使用 PostgreSQL
     # 優先檢查是否有個別環境變數
     if os.getenv('DB_HOST'):
+        db_host = normalize_hostname(os.getenv('DB_HOST', 'localhost'))
         DATABASES = {
             'default': {
                 'ENGINE': 'django.db.backends.postgresql',
                 'NAME': os.getenv('DB_NAME', 'clickfast_db'),
                 'USER': os.getenv('DB_USER', 'postgres'),
                 'PASSWORD': os.getenv('DB_PASSWORD', ''),
-                'HOST': os.getenv('DB_HOST', 'localhost'),
+                'HOST': db_host,
                 'PORT': os.getenv('DB_PORT', '5432'),
                 'OPTIONS': {
-                    'sslmode': 'require',  # 強制使用 SSL 連接（適用於 Supabase）
+                    'sslmode': get_ssl_mode(db_host),  # CI 環境和 localhost 不使用 SSL，雲端服務使用 SSL
                 },
                 'CONN_MAX_AGE': 600,  # 連接池：保持連接 10 分鐘，減少連接開銷
             }
