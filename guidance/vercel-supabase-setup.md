@@ -135,10 +135,20 @@ python manage.py init_game_data
 - 確認 `DB_NAME` 正確（Supabase 預設是 `postgres`）
 - 檢查 Supabase 專案是否已正確創建
 
+## SSL 連接配置
+
+Supabase 預設啟用 SSL 連接。Django 配置已自動設置 `sslmode: 'require'`，確保所有資料庫連接都使用 SSL。
+
+**重要**：
+- 如果 Supabase 的 SSL 設置為「Enforce SSL on incoming connections」，Django 會自動使用 SSL 連接
+- 不需要下載或配置 SSL 證書
+- 所有 PostgreSQL 連接都會自動使用 SSL
+
 ## 注意事項
 
 1. **不要**在代碼中硬編碼資料庫密碼
 2. **不要**將 `.env.local` 提交到 Git（已在 `.gitignore` 中）
 3. Supabase 免費方案有連接數限制，適合小型專案
 4. 生產環境建議使用強密碼並定期更換
+5. SSL 連接已自動配置，無需額外設置
 

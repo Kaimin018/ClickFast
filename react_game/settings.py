@@ -103,6 +103,7 @@ def parse_database_url(database_url):
             'PORT': parsed.port or '5432',
             'OPTIONS': {
                 'connect_timeout': 10,
+                'sslmode': 'require',  # 強制使用 SSL 連接（適用於 Supabase）
             },
         }
     except Exception as e:
@@ -146,6 +147,7 @@ elif os.getenv('VERCEL'):
                 'PORT': os.getenv('DB_PORT', '5432'),
                 'OPTIONS': {
                     'connect_timeout': 10,
+                    'sslmode': 'require',  # 強制使用 SSL 連接（適用於 Supabase）
                 },
             }
         }
@@ -169,6 +171,9 @@ else:
                 'PASSWORD': os.getenv('DB_PASSWORD', ''),
                 'HOST': os.getenv('DB_HOST', 'localhost'),
                 'PORT': os.getenv('DB_PORT', '5432'),
+                'OPTIONS': {
+                    'sslmode': 'require',  # 強制使用 SSL 連接（適用於 Supabase）
+                },
             }
         }
     else:
