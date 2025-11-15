@@ -112,7 +112,7 @@ guidance/
 ├── Structure.md             # 專案結構說明（本文件）
 ├── local-testing-guide.md   # 本地測試指南
 ├── How-to.md                # 開發和部署指南
-└── NOTE.md                  # 部署平台備註
+└── deployment-platforms.md   # 部署平台備註
 ```
 
 ## assets/ - 靜態資源
@@ -259,6 +259,16 @@ python manage.py test game.Test_Cases.01_Authentication_System --keepdb
 - `python manage.py test game.Test_Cases.07_Flow_And_E2E_Tests`: 運行端到端測試
 
 詳細測試說明請參考 `game/Test_Cases/TC_README.md`
+
+## 用戶端資料儲存
+
+專案採用最佳實踐的資料儲存策略：
+
+- **登入狀態 (Session)**: 使用 Django Session Cookie（HTTP Only，更安全）
+- **遊戲設定、臨時進度**: 使用 LocalStorage（簡單、快速、容量足夠）
+- **複雜資料集**: 預留 IndexedDB（未來擴展用）
+
+詳細說明請參考 `guidance/client-storage-guide.md`
 
 ## 依賴套件
 
