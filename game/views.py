@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db import transaction
 from django.db import connection
+from allauth.socialaccount.models import SocialAccount
 import json
 import traceback
 from .models import (
@@ -696,3 +697,51 @@ def api_rollback_all_shop_items(request):
     except Exception as e:
         error_message = handle_database_error(e)
         return JsonResponse({'error': error_message}, status=500)
+
+
+@require_http_methods(["GET"])
+def social_login_callback(request):
+    """處理社交登入回調，返回 JSON 格式的用戶資料"""
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': '未登錄'}, status=401)
+    
+    try:
+        # 獲取或創建玩家資料
+        profile = get_or_create_profile(request.user)
+        
+        # 獲取社交帳號資訊
+        social_account = None
+        provider = None
+        try:
+            social_account = SocialAccount.objects.get(user=request.user)
+            provider = social_account.provider
+        except SocialAccount.DoesNotExist:
+            pass
+        
+        return JsonResponse({
+            'success': True,
+            'user': {
+                'id': request.user.id,
+                'username': request.user.username,
+            },
+            'profile': {
+                'username': request.user.username,
+                'created_at': profile.created_at.isoformat(),
+                'battle_wins': profile.battle_wins,
+                'coins': profile.coins,
+                'total_clicks': profile.total_clicks,
+                'best_clicks_per_round': profile.best_clicks_per_round,
+                'total_games_played': profile.total_games_played,
+            },
+            'social_provider': provider,
+        })
+    except Exception as e:
+        error_message = handle_database_error(e)
+        return JsonResponse({'error': error_message}, status=500)
+
+
+def social_login_success(request):
+    """社交登入成功頁面（在彈出視窗中顯示）"""
+    if not request.user.is_authenticated:
+        return redirect('/')
+    return render(request, 'game/social_login_success.html')

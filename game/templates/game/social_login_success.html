@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>社交登入</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 10px;
+      padding: 40px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+    
+    .success-icon {
+      font-size: 64px;
+      margin-bottom: 20px;
+    }
+    
+    h2 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    
+    p {
+      color: #666;
+      margin-bottom: 30px;
+      line-height: 1.6;
+    }
+    
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    button {
+      padding: 12px 24px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+    
+    .btn-primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #5568d3;
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #666;
+    }
+    
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+    
+    .loading {
+      display: none;
+    }
+    
+    .loading.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="success-icon">✅</div>
+    <h2>登入成功！</h2>
+    <p>您已成功使用社交帳號登入，視窗將自動關閉...</p>
+    <div class="button-group">
+      <button class="btn-primary" onclick="closeWindow()">確定</button>
+      <button class="btn-secondary" onclick="cancelLogin()">取消</button>
+    </div>
+    <div class="loading" id="loading">正在處理...</div>
+  </div>
+
+  <script>
+    // 自動關閉視窗（3秒後）
+    setTimeout(() => {
+      if (window.opener) {
+        window.opener.postMessage({ type: 'SOCIAL_LOGIN_SUCCESS' }, '*');
+      }
+      window.close();
+    }, 3000);
+    
+    function closeWindow() {
+      if (window.opener) {
+        window.opener.postMessage({ type: 'SOCIAL_LOGIN_SUCCESS' }, '*');
+      }
+      window.close();
+    }
+    
+    function cancelLogin() {
+      if (window.opener) {
+        window.opener.postMessage({ type: 'SOCIAL_LOGIN_CANCELLED' }, '*');
+      }
+      window.close();
+    }
+  </script>
+</body>
+</html>
+

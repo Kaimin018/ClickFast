@@ -288,6 +288,121 @@
       background: #5568d3;
     }
 
+    /* 社交登入按鈕樣式 */
+    .social-login-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 300px;
+      margin: 0 auto;
+    }
+
+    .social-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 20px;
+      font-size: 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: white;
+      font-weight: 500;
+    }
+
+    /* Google 按鈕 - 白色背景，符合 Google 品牌指南 */
+    .google-btn {
+      background: #ffffff;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+      box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+    }
+
+    .google-btn:hover {
+      background: #f8f9fa;
+      box-shadow: 0 1px 3px rgba(60, 64, 67, 0.3), 0 4px 8px 3px rgba(60, 64, 67, 0.15);
+      border-color: #dadce0;
+    }
+
+    .google-btn:active {
+      background: #f1f3f4;
+      box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+    }
+
+    /* Facebook 按鈕 - Facebook 官方藍色 #1877F2 */
+    .facebook-btn {
+      background: #1877f2;
+      color: white;
+      border: none;
+      box-shadow: 0 2px 4px rgba(24, 119, 242, 0.3);
+    }
+
+    .facebook-btn:hover {
+      background: #166fe5;
+      box-shadow: 0 4px 8px rgba(24, 119, 242, 0.4);
+    }
+
+    .facebook-btn:active {
+      background: #1557b0;
+      box-shadow: 0 1px 2px rgba(24, 119, 242, 0.3);
+    }
+
+    /* Instagram 按鈕 - Instagram 官方漸變色 */
+    .instagram-btn {
+      background: linear-gradient(45deg, #833ab4 0%, #fd1d1d 50%, #fcb045 100%);
+      color: white;
+      border: none;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(131, 58, 180, 0.3);
+    }
+
+    .instagram-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .instagram-btn:hover {
+      box-shadow: 0 4px 8px rgba(131, 58, 180, 0.4);
+    }
+
+    .instagram-btn:hover::before {
+      opacity: 1;
+    }
+
+    .instagram-btn:active {
+      opacity: 0.95;
+      box-shadow: 0 1px 2px rgba(131, 58, 180, 0.3);
+    }
+
+    .instagram-btn .social-icon {
+      position: relative;
+      z-index: 1;
+    }
+
+    .instagram-btn span:not(.social-icon) {
+      position: relative;
+      z-index: 1;
+    }
+
+    .social-icon {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+
     .game-container {
       position: relative;
       text-align: center;
@@ -1461,6 +1576,16 @@
         font-size: 16px;
       }
 
+      .social-login-buttons {
+        max-width: 100%;
+      }
+
+      .social-btn {
+        width: 100%;
+        padding: 14px;
+        font-size: 15px;
+      }
+
       /* 歷史記錄面板優化 */
       .panel:has(#historyContainer) {
         padding: 10px;
@@ -1512,10 +1637,36 @@
 
     <div id="loginPanel" class="panel login-panel">
       <h2>歡迎來到 ClickFast！</h2>
-      <p style="margin: 20px 0;">請輸入用戶名開始遊戲</p>
+      <p style="margin: 20px 0;">請輸入用戶名開始遊戲，或使用社交帳號登入</p>
       <div>
         <input type="text" id="usernameInput" placeholder="輸入用戶名" maxlength="20">
         <button onclick="loginOrRegister()">開始遊戲</button>
+      </div>
+      <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+        <p style="margin-bottom: 15px; color: #666; font-size: 14px;">或使用社交帳號登入：</p>
+        <div class="social-login-buttons">
+          <button class="social-btn google-btn" onclick="socialLogin('google')">
+            <svg class="social-icon" width="20" height="20" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+            </svg>
+            以 Google 帳號登入
+          </button>
+          <button class="social-btn facebook-btn" onclick="socialLogin('facebook')">
+            <svg class="social-icon" width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+              <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            以 Facebook 帳號登入
+          </button>
+          <button class="social-btn instagram-btn" onclick="socialLogin('instagram')">
+            <svg class="social-icon" width="20" height="20" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.691-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+            以 Instagram 帳號登入
+          </button>
+        </div>
       </div>
     </div>
 
@@ -1836,6 +1987,168 @@
       } catch (error) {
         // 隱藏載入視窗（錯誤已在 apiCall 中處理並顯示 alert）
         hideLoadingModal();
+      }
+    }
+
+    // 社交登入（使用彈出視窗）
+    let socialLoginWindow = null;
+    let socialLoginCheckInterval = null;
+    
+    function socialLogin(provider) {
+      // 顯示載入中視窗
+      showLoadingModal('正在開啟登入視窗...', `正在連接到 ${provider} 登入頁面`);
+      
+      // 打開彈出視窗
+      const width = 600;
+      const height = 700;
+      const left = (screen.width - width) / 2;
+      const top = (screen.height - height) / 2;
+      
+      const loginUrl = `/accounts/${provider}/login/?process=login&next=/api/social-login-success/`;
+      socialLoginWindow = window.open(
+        loginUrl,
+        'socialLogin',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+      );
+      
+      if (!socialLoginWindow) {
+        hideLoadingModal();
+        alert('無法開啟彈出視窗，請檢查瀏覽器的彈出視窗設定');
+        return;
+      }
+      
+      // 監聽彈出視窗關閉
+      socialLoginCheckInterval = setInterval(() => {
+        if (socialLoginWindow.closed) {
+          clearInterval(socialLoginCheckInterval);
+          hideLoadingModal();
+          // 檢查是否成功登入
+          checkSocialLoginStatus();
+        }
+      }, 500);
+      
+      // 監聽來自彈出視窗的消息
+      window.addEventListener('message', handleSocialLoginMessage);
+    }
+    
+    // 處理來自彈出視窗的消息
+    function handleSocialLoginMessage(event) {
+      // 驗證消息來源（可選，根據需要調整）
+      if (event.data && event.data.type === 'SOCIAL_LOGIN_SUCCESS') {
+        if (socialLoginWindow) {
+          socialLoginWindow.close();
+        }
+        if (socialLoginCheckInterval) {
+          clearInterval(socialLoginCheckInterval);
+        }
+        window.removeEventListener('message', handleSocialLoginMessage);
+        handleSocialLoginSuccess();
+      } else if (event.data && event.data.type === 'SOCIAL_LOGIN_CANCELLED') {
+        if (socialLoginWindow) {
+          socialLoginWindow.close();
+        }
+        if (socialLoginCheckInterval) {
+          clearInterval(socialLoginCheckInterval);
+        }
+        window.removeEventListener('message', handleSocialLoginMessage);
+        hideLoadingModal();
+      }
+    }
+    
+    // 處理社交登入成功
+    async function handleSocialLoginSuccess() {
+      try {
+        showLoadingModal('正在登入中...', '正在驗證社交帳號並建立連線');
+        
+        const result = await apiCall('/api/social-login-callback/', 'GET');
+        
+        if (result && result.success) {
+          // 保存登入狀態
+          localStorage.setItem('clickfast_username', result.profile.username);
+          localStorage.setItem('clickfast_logged_in', 'true');
+          
+          // 清除之前的歷史記錄顯示
+          document.getElementById('historyContainer').innerHTML = '<p style="color: #666;">暫無記錄</p>';
+          document.getElementById('detailedHistoryContainer').innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">暫無記錄</p>';
+          
+          gameState.userProfile = result.profile;
+          document.getElementById('loginPanel').style.display = 'none';
+          document.getElementById('gameContent').style.display = 'block';
+          document.getElementById('userInfo').style.display = 'flex';
+          updateProfileDisplay();
+          
+          // 載入完整資料
+          await loadProfile();
+          
+          // 檢查是否為超級帳號
+          checkSuperAccount();
+          
+          hideLoadingModal();
+        }
+      } catch (error) {
+        hideLoadingModal();
+        console.error('社交登入錯誤:', error);
+        alert('社交登入失敗，請稍後再試');
+      }
+    }
+    
+    // 檢查社交登入狀態
+    async function checkSocialLoginStatus() {
+      try {
+        const result = await apiCall('/api/social-login-callback/', 'GET', null, true);
+        if (result && result.success) {
+          await handleSocialLoginSuccess();
+        }
+      } catch (error) {
+        // 未登入，這是正常情況
+        console.log('用戶取消了登入或尚未完成登入流程');
+      }
+    }
+
+    // 檢查是否為社交登入回調
+    async function checkSocialLoginCallback() {
+      // 檢查 URL 中是否有社交登入相關的參數，或者檢查用戶是否已登入但尚未載入資料
+      const urlParams = new URLSearchParams(window.location.search);
+      const isSocialCallback = urlParams.has('next') || window.location.pathname.includes('accounts/');
+      
+      // 如果登入面板顯示，但用戶可能已經通過社交登入，嘗試獲取資料
+      if (isSocialCallback || (document.getElementById('loginPanel').style.display !== 'none' && !gameState.userProfile)) {
+        try {
+          // 嘗試獲取用戶資料（靜默模式，不顯示錯誤）
+          const result = await apiCall('/api/social-login-callback/', 'GET', null, true);
+          
+          if (result && result.success) {
+            showLoadingModal('正在登入中...', '正在驗證社交帳號並建立連線');
+            
+            // 保存登入狀態
+            localStorage.setItem('clickfast_username', result.profile.username);
+            localStorage.setItem('clickfast_logged_in', 'true');
+            
+            // 清除之前的歷史記錄顯示
+            document.getElementById('historyContainer').innerHTML = '<p style="color: #666;">暫無記錄</p>';
+            document.getElementById('detailedHistoryContainer').innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">暫無記錄</p>';
+            
+            gameState.userProfile = result.profile;
+            document.getElementById('loginPanel').style.display = 'none';
+            document.getElementById('gameContent').style.display = 'block';
+            document.getElementById('userInfo').style.display = 'flex';
+            updateProfileDisplay();
+            
+            // 載入完整資料
+            await loadProfile();
+            
+            // 檢查是否為超級帳號
+            checkSuperAccount();
+            
+            // 清除 URL 參數
+            window.history.replaceState({}, document.title, '/');
+            
+            hideLoadingModal();
+          }
+        } catch (error) {
+          // 如果獲取失敗，可能是用戶尚未登入，這是正常情況，不需要處理
+          console.log('尚未登入或非社交登入回調');
+        }
       }
     }
 
@@ -3095,6 +3408,9 @@
 
     // 初始化
     document.addEventListener('DOMContentLoaded', () => {
+      // 檢查是否為社交登入回調
+      checkSocialLoginCallback();
+      
       // 回車鍵登錄
       document.getElementById('usernameInput').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {

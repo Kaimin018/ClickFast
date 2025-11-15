@@ -10,3 +10,4 @@ selenium==4.15.2
 webdriver-manager==4.0.1
 coverage==7.3.2
 tblib==1.2.0
+django-allauth==0.57.0
