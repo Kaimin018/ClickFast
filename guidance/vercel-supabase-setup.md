@@ -22,6 +22,26 @@ Supabase 提供的是標準的 PostgreSQL 資料庫，Django 可以直接使用 
 
 在 Vercel 專案設置中，前往 **Settings** → **Environment Variables**，添加以下變數：
 
+### 方法 A: 使用 DATABASE_URL（推薦）
+
+Supabase 提供完整的連接字串，直接使用 `DATABASE_URL`：
+
+```
+DATABASE_URL=postgresql://postgres:你的密碼@你的專案.supabase.co:5432/postgres
+VERCEL=1
+```
+
+**如何取得 DATABASE_URL**：
+1. 在 Supabase 專案中，前往 **Settings** → **Database**
+2. 找到 **Connection string** 區塊
+3. 選擇 **URI** 格式
+4. 複製完整的連接字串（格式：`postgresql://postgres:[YOUR-PASSWORD]@xxx.supabase.co:5432/postgres`）
+5. 將 `[YOUR-PASSWORD]` 替換為實際密碼
+
+### 方法 B: 使用個別環境變數（備選方案）
+
+如果不想使用 `DATABASE_URL`，也可以設置個別變數：
+
 ```
 DB_NAME=postgres
 DB_USER=postgres
@@ -31,7 +51,10 @@ DB_PORT=5432
 VERCEL=1
 ```
 
-**重要**：確保這些變數設置在 **Production**、**Preview** 和 **Development** 環境中。
+**重要**：
+- 確保這些變數設置在 **Production**、**Preview** 和 **Development** 環境中
+- `DATABASE_URL` 的優先級高於個別環境變數
+- 如果同時設置了 `DATABASE_URL` 和個別變數，系統會優先使用 `DATABASE_URL`
 
 ## 步驟 3: 執行資料庫遷移
 

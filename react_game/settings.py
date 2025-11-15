@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+from urllib.parse import urlparse
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -83,6 +84,31 @@ WSGI_APPLICATION = 'react_game.wsgi.application'
 
 # 使用環境變數配置資料庫，預設使用 PostgreSQL
 # 開發環境可以使用 SQLite3，但生產環境必須使用 PostgreSQL
+
+def parse_database_url(database_url):
+    """解析 DATABASE_URL 連接字串"""
+    try:
+        # 處理 postgres:// 和 postgresql:// 兩種格式
+        if database_url.startswith('postgres://'):
+            database_url = database_url.replace('postgres://', 'postgresql://', 1)
+        
+        parsed = urlparse(database_url)
+        
+        return {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': parsed.path[1:] if parsed.path.startswith('/') else parsed.path,  # 移除開頭的 /
+            'USER': parsed.username,
+            'PASSWORD': parsed.password,
+            'HOST': parsed.hostname,
+            'PORT': parsed.port or '5432',
+            'OPTIONS': {
+                'connect_timeout': 10,
+            },
+        }
+    except Exception as e:
+        # 如果解析失敗，返回 None
+        return None
+
 if os.getenv('USE_SQLITE', '').lower() == 'true':
     # 開發環境：使用 SQLite3（僅用於本地開發）
     DATABASES = {
@@ -91,9 +117,24 @@ if os.getenv('USE_SQLITE', '').lower() == 'true':
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+elif os.getenv('DATABASE_URL'):
+    # 優先使用 DATABASE_URL（適用於 Vercel、Heroku 等平台）
+    database_config = parse_database_url(os.getenv('DATABASE_URL'))
+    if database_config:
+        DATABASES = {
+            'default': database_config
+        }
+    else:
+        # 如果解析失敗，回退到 SQLite3
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 elif os.getenv('VERCEL'):
     # Vercel 環境：必須使用 PostgreSQL（Supabase 或其他雲端資料庫）
-    # 檢查是否有設置資料庫環境變數
+    # 檢查是否有設置個別資料庫環境變數
     if os.getenv('DB_HOST'):
         DATABASES = {
             'default': {
@@ -118,16 +159,26 @@ elif os.getenv('VERCEL'):
         }
 else:
     # 其他環境（Render 等）：使用 PostgreSQL
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.getenv('DB_NAME', 'clickfast_db'),
-            'USER': os.getenv('DB_USER', 'postgres'),
-            'PASSWORD': os.getenv('DB_PASSWORD', ''),
-            'HOST': os.getenv('DB_HOST', 'localhost'),
-            'PORT': os.getenv('DB_PORT', '5432'),
+    # 優先檢查是否有個別環境變數
+    if os.getenv('DB_HOST'):
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.getenv('DB_NAME', 'clickfast_db'),
+                'USER': os.getenv('DB_USER', 'postgres'),
+                'PASSWORD': os.getenv('DB_PASSWORD', ''),
+                'HOST': os.getenv('DB_HOST', 'localhost'),
+                'PORT': os.getenv('DB_PORT', '5432'),
+            }
         }
-    }
+    else:
+        # 如果沒有設置，使用 SQLite3（開發環境）
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 
 
 # Password validation
