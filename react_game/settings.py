@@ -91,8 +91,33 @@ if os.getenv('USE_SQLITE', '').lower() == 'true':
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+elif os.getenv('VERCEL'):
+    # Vercel 環境：必須使用 PostgreSQL（Supabase 或其他雲端資料庫）
+    # 檢查是否有設置資料庫環境變數
+    if os.getenv('DB_HOST'):
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': os.getenv('DB_NAME', 'clickfast_db'),
+                'USER': os.getenv('DB_USER', 'postgres'),
+                'PASSWORD': os.getenv('DB_PASSWORD', ''),
+                'HOST': os.getenv('DB_HOST'),
+                'PORT': os.getenv('DB_PORT', '5432'),
+                'OPTIONS': {
+                    'connect_timeout': 10,
+                },
+            }
+        }
+    else:
+        # 如果沒有設置資料庫環境變數，使用 SQLite3（僅用於測試，不適合生產環境）
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
+        }
 else:
-    # 生產環境：使用 PostgreSQL
+    # 其他環境（Render 等）：使用 PostgreSQL
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',

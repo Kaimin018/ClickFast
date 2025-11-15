@@ -17,3 +17,11 @@ db.sqlite3-journal
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+
+# 忽略安全相關資料夾
+security/
+
+# 忽略環境變數文件
+.env
+.env.local
+.env.*.local
