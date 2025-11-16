@@ -465,7 +465,7 @@ def api_get_shop(request):
         purchases = PlayerPurchase.objects.filter(user=request.user).select_related('shop_item')
         purchases_dict = {purchase.shop_item_id: purchase for purchase in purchases}
         
-        # 檢查是否有額外點擊按鈕
+        # 檢查是否有寵物夥伴
         extra_button_item = ShopItem.objects.filter(item_type='extra_button').first()
         if extra_button_item and extra_button_item.id in purchases_dict:
             extra_button_level = purchases_dict[extra_button_item.id].level
@@ -479,12 +479,12 @@ def api_get_shop(request):
         # 計算下一級價格（價格遞增：基礎價格 * (等級 + 1)）
         next_level_price = item.base_price * (current_level + 1) if current_level < item.max_level else None
         
-        # 對於自動點擊器，檢查前置條件（需要額外點擊按鈕）
+        # 對於寵物夥伴能力，檢查前置條件（需要寵物夥伴）
         requires_extra_button = item.item_type == 'auto_clicker'
         can_upgrade = current_level < item.max_level and next_level_price is not None
         
-        # 如果沒有額外點擊按鈕且沒有自動點擊器，自動點擊器不能升級
-        # 如果已經有自動點擊器（current_level > 0），則可以升級
+        # 如果沒有寵物夥伴且沒有提升能力，寵物夥伴能力不能升級
+        # 如果已經有提升能力（current_level > 0），則可以升級
         if requires_extra_button and extra_button_level == 0 and current_level == 0:
             can_upgrade = False
         
@@ -558,13 +558,13 @@ def api_purchase_item(request):
         
         # 只在需要時查詢相關物品
         if shop_item.item_type == 'auto_clicker':
-            # 購買自動點擊器時，需要檢查額外點擊按鈕
+            # 提升寵物夥伴能力時，需要檢查寵物夥伴
             extra_button_item = ShopItem.objects.filter(item_type='extra_button').first()
             if extra_button_item:
                 related_items['extra_button'] = extra_button_item
                 shop_item_ids_to_query.append(extra_button_item.id)
         elif shop_item.item_type == 'extra_button':
-            # 購買額外點擊按鈕時，可能需要創建自動點擊器
+            # 購買寵物夥伴時，可能需要創建寵物夥伴能力
             auto_clicker_item = ShopItem.objects.filter(item_type='auto_clicker').first()
             if auto_clicker_item:
                 related_items['auto_clicker'] = auto_clicker_item
@@ -594,13 +594,13 @@ def api_purchase_item(request):
             purchase = purchases_dict.get(item_id)
             current_level = purchase.level if purchase else 0
             
-            # 對於自動點擊器，檢查前置條件（需要額外點擊按鈕）
+            # 對於寵物夥伴能力，檢查前置條件（需要寵物夥伴）
             if shop_item.item_type == 'auto_clicker':
                 extra_button_item = related_items.get('extra_button')
                 if extra_button_item:
                     extra_button_purchase = purchases_dict.get(extra_button_item.id)
                     if not extra_button_purchase or extra_button_purchase.level == 0:
-                        return JsonResponse({'error': '需要先購買「額外點擊按鈕」才能購買自動點擊器'}, status=400)
+                        return JsonResponse({'error': '需要先購買「購買寵物夥伴」才能提升寵物夥伴能力'}, status=400)
             
             if current_level >= shop_item.max_level:
                 return JsonResponse({'error': '已達到最大等級'}, status=400)
@@ -633,13 +633,13 @@ def api_purchase_item(request):
                     price_paid=price
                 )
             
-            # 如果購買的是額外點擊按鈕，自動附加1等級的自動點擊器
+            # 如果購買的是寵物夥伴，自動附加1等級的寵物夥伴能力
             if shop_item.item_type == 'extra_button' and purchase.level == 1:
                 auto_clicker_item = related_items.get('auto_clicker')
                 if auto_clicker_item:
                     auto_clicker_purchase = purchases_dict.get(auto_clicker_item.id)
                     
-                    # 如果沒有自動點擊器，創建1等級的自動點擊器
+                    # 如果沒有寵物夥伴能力，創建1等級的寵物夥伴能力
                     if not auto_clicker_purchase:
                         PlayerPurchase.objects.create(
                             user=request.user,

@@ -50,8 +50,8 @@ class ShopItem(models.Model):
     """商店物品"""
     ITEM_TYPES = [
         ('time_extension', '遊戲時間延長'),
-        ('extra_button', '額外點擊按鈕'),
-        ('auto_clicker', '自動點擊器'),
+        ('extra_button', '購買寵物夥伴'),
+        ('auto_clicker', '提升寵物夥伴能力'),
     ]
 
     name = models.CharField(max_length=100, verbose_name="物品名稱")
@@ -60,8 +60,8 @@ class ShopItem(models.Model):
     base_price = models.IntegerField(verbose_name="基礎價格")
     effect_value = models.FloatField(default=0, verbose_name="效果值")
     # 對於時間延長：effect_value = 每次升級增加的秒數
-    # 對於額外按鈕：effect_value = 每次升級增加的按鈕數量
-    # 對於自動點擊器：effect_value 不再使用，頻率由等級直接計算（Lv.1=3秒/次，Lv.2=2秒/次，Lv.3=1秒/次，Lv.4+=每秒(等級-2)次）
+    # 對於寵物夥伴：effect_value = 每次升級增加的寵物數量
+    # 對於寵物夥伴能力：effect_value 不再使用，頻率由等級直接計算（Lv.1=3秒/次，Lv.2=2秒/次，Lv.3=1秒/次，Lv.4+=每秒(等級-2)次）
     max_level = models.IntegerField(default=10, verbose_name="最大等級")
     created_at = models.DateTimeField(auto_now_add=True)
 

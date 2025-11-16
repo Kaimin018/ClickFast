@@ -85,9 +85,9 @@ class PurchaseFunctionTestCase(TestCase):
         """測試用例：購買多個等級的物品"""
         # 創建商店物品
         shop_item = ShopItem.objects.create(
-            name='自動點擊器',
+            name='提升寵物夥伴能力',
             item_type='auto_clicker',
-            description='自動點擊',
+            description='提升寵物夥伴的點擊能力',
             base_price=100,
             effect_value=1.0,
             max_level=5
@@ -132,10 +132,10 @@ class PurchaseFunctionTestCase(TestCase):
         self.assertEqual(profile.coins, 700)
 
     def test_purchase_auto_clicker_upgrade(self):
-        """測試用例：升級自動點擊器（需要前置條件）"""
-        # 創建額外點擊按鈕和自動點擊器
+        """測試用例：提升寵物夥伴能力（需要前置條件）"""
+        # 創建寵物夥伴和寵物夥伴能力
         extra_button_item = ShopItem.objects.create(
-            name='額外點擊按鈕',
+            name='購買寵物夥伴',
             item_type='extra_button',
             description='增加點擊按鈕',
             base_price=50,
@@ -144,7 +144,7 @@ class PurchaseFunctionTestCase(TestCase):
         )
         
         auto_clicker_item = ShopItem.objects.create(
-            name='自動點擊器',
+            name='提升寵物夥伴能力',
             item_type='auto_clicker',
             description='自動點擊',
             base_price=100,
@@ -159,7 +159,7 @@ class PurchaseFunctionTestCase(TestCase):
             content_type='application/json'
         )
 
-        # 測試：未購買額外點擊按鈕時，無法購買自動點擊器
+        # 測試：未購買寵物夥伴時，無法提升寵物夥伴能力
         response1 = self.client.post(
             '/api/purchase/',
             data=json.dumps({'item_id': auto_clicker_item.id}),
@@ -167,9 +167,9 @@ class PurchaseFunctionTestCase(TestCase):
         )
         self.assertEqual(response1.status_code, 400)
         data1 = json.loads(response1.content)
-        self.assertIn('額外點擊按鈕', data1['error'])
+        self.assertIn('購買寵物夥伴', data1['error'])
 
-        # 先購買額外點擊按鈕（等級1）
+        # 先購買寵物夥伴（等級1）
         response2 = self.client.post(
             '/api/purchase/',
             data=json.dumps({'item_id': extra_button_item.id}),
@@ -179,7 +179,7 @@ class PurchaseFunctionTestCase(TestCase):
         data2 = json.loads(response2.content)
         self.assertEqual(data2['new_level'], 1)
 
-        # 驗證：購買額外點擊按鈕後，自動附加了1等級的自動點擊器
+        # 驗證：購買寵物夥伴後，自動附加了1等級的寵物夥伴能力
         auto_clicker_purchase = PlayerPurchase.objects.filter(
             user__username=self.username,
             shop_item=auto_clicker_item
@@ -188,7 +188,7 @@ class PurchaseFunctionTestCase(TestCase):
         self.assertEqual(auto_clicker_purchase.level, 1)
         self.assertEqual(auto_clicker_purchase.price_paid, 0)  # 免費附加
 
-        # 現在可以升級自動點擊器（等級1 -> 等級2）
+        # 現在可以提升寵物夥伴能力（等級1 -> 等級2）
         response3 = self.client.post(
             '/api/purchase/',
             data=json.dumps({'item_id': auto_clicker_item.id}),

@@ -8,6 +8,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         self.stdout.write('Initializing game data...')
 
+        # 刪除舊的商店物品（「額外點擊按鈕」和「自動點擊器」）
+        old_items_to_delete = ['額外點擊按鈕', '自動點擊器']
+        for old_name in old_items_to_delete:
+            deleted_count = ShopItem.objects.filter(name=old_name).delete()[0]
+            if deleted_count > 0:
+                self.stdout.write(self.style.WARNING(f'Deleted old shop item: {old_name}'))
+
         # 創建商店物品
         shop_items = [
             {
@@ -19,17 +26,17 @@ class Command(BaseCommand):
                 'max_level': 10,
             },
             {
-                'name': '額外點擊按鈕',
+                'name': '購買寵物夥伴',
                 'item_type': 'extra_button',
-                'description': '增加額外的點擊按鈕，每次升級增加1個按鈕。首次購買時會自動獲得1等級的自動點擊器',
+                'description': '購買可愛的寵物夥伴，每次升級增加1個寵物。首次購買時會自動獲得1等級的寵物夥伴能力。寵物會自動幫你點擊！',
                 'base_price': 100,
-                'effect_value': 1.0,  # 每次升級增加1個按鈕
+                'effect_value': 1.0,  # 每次升級增加1個寵物
                 'max_level': 5,
             },
             {
-                'name': '自動點擊器',
+                'name': '提升寵物夥伴能力',
                 'item_type': 'auto_clicker',
-                'description': '自動點擊器：Lv.1每3秒點擊1次，Lv.2每2秒點擊1次，Lv.3每1秒點擊1次，Lv.4+每秒點擊(等級-2)次。需要先購買「額外點擊按鈕」才能購買',
+                'description': '提升寵物夥伴的點擊能力：Lv.1每3秒點擊1次，Lv.2每2秒點擊1次，Lv.3每1秒點擊1次，Lv.4+每秒點擊(等級-2)次。需要先購買「購買寵物夥伴」才能提升',
                 'base_price': 200,
                 'effect_value': 5.0,  # 此值不再使用，頻率由等級直接計算
                 'max_level': 10,
@@ -46,6 +53,9 @@ class Command(BaseCommand):
             else:
                 # 更新現有物品的描述和其他可更新字段
                 updated = False
+                if item.item_type != item_data['item_type']:
+                    item.item_type = item_data['item_type']
+                    updated = True
                 if item.description != item_data['description']:
                     item.description = item_data['description']
                     updated = True
