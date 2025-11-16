@@ -2418,6 +2418,17 @@
           throw error;
         }
         
+        // 處理並發購買錯誤（429 Too Many Requests）
+        if (error.result && error.result.error_type === 'concurrent_purchase') {
+          const errorMessage = error.result.error || error.message || '購買請求過於頻繁，請稍後再試';
+          if (useToast) {
+            showErrorToast('提示', errorMessage);
+          } else {
+            await customAlert(errorMessage, '提示', '⚠️');
+          }
+          throw error;
+        }
+        
         // 其他錯誤：使用 Toast 或 alert
         if (useToast) {
           let errorMessage = error.message;
@@ -2425,6 +2436,8 @@
             errorMessage = '無法連接到資料庫伺服器，請稍後再試。';
           } else if (errorMessage.includes('500') || errorMessage.includes('Internal Server Error')) {
             errorMessage = '伺服器發生錯誤，請稍後再試。';
+          } else if (errorMessage.includes('請求過於頻繁') || errorMessage.includes('concurrent')) {
+            errorMessage = '購買請求過於頻繁，請稍後再試。';
           }
           showErrorToast('錯誤', errorMessage);
         } else {
@@ -2434,6 +2447,8 @@
             errorMessage = '無法連接到資料庫伺服器，請稍後再試。\n\n如果問題持續存在，可能是資料庫服務暫時無法使用。';
           } else if (errorMessage.includes('500') || errorMessage.includes('Internal Server Error')) {
             errorMessage = '伺服器發生錯誤，請稍後再試。';
+          } else if (errorMessage.includes('請求過於頻繁') || errorMessage.includes('concurrent')) {
+            errorMessage = '購買請求過於頻繁，請稍後再試。';
           }
           await customAlert('錯誤: ' + errorMessage, '錯誤', '⚠️');
         }
@@ -2935,31 +2950,38 @@
       mainButtonText.textContent = '點擊！';
       mainButton.appendChild(mainButtonText);
       
-      // 同時支持點擊和觸控事件，確保手機快速連點正常
-      mainButton.onclick = handleClick;
+      // 行動裝置：只使用 touchstart（按下時計算），不使用 touchend
+      // 使用標記來防止 touchstart 觸發後瀏覽器自動觸發的 click 事件重複計算
+      let touchHandledTimeout = null;
       
-      // 使用 touchstart 立即響應，提供最佳快速連點體驗
-      // 將 touchStartTime 存儲在按鈕的數據屬性中，避免作用域問題
       mainButton.addEventListener('touchstart', function(e) {
         if (gameState.isPlaying) {
-          // 立即觸發點擊
+          // 清除之前的標記清除定時器（如果存在）
+          if (touchHandledTimeout) {
+            clearTimeout(touchHandledTimeout);
+          }
+          
+          // 標記已由 touchstart 處理，避免後續的 click 事件重複計算
+          mainButton.dataset.touchHandled = 'true';
+          
+          // 立即觸發點擊（只計算按下時）
           handleClick(e);
-          // 記錄觸摸開始時間
-          this.dataset.touchStartTime = Date.now().toString();
+          
+          // 300ms 後清除標記（瀏覽器通常在 touchend 後約 300ms 觸發 click）
+          touchHandledTimeout = setTimeout(() => {
+            delete mainButton.dataset.touchHandled;
+            touchHandledTimeout = null;
+          }, 300);
         }
       }, { passive: true });
       
-      // touchend 也處理，但只在 touchstart 後一定時間才觸發（避免重複）
-      mainButton.addEventListener('touchend', function(e) {
-        if (gameState.isPlaying) {
-          const touchStartTime = parseInt(this.dataset.touchStartTime || '0');
-          const now = Date.now();
-          // 如果 touchstart 和 touchend 間隔較長（>100ms），可能是單獨的點擊
-          if (touchStartTime > 0 && now - touchStartTime > 100) {
-            handleClick(e);
-          }
+      // 桌面版使用 onclick，行動裝置的 click 事件會被標記阻止
+      mainButton.onclick = function(e) {
+        // 如果是觸摸設備，touchstart 已經處理了，這裡不處理（避免重複）
+        if (!this.dataset.touchHandled) {
+          handleClick(e);
         }
-      }, { passive: true });
+      };
       
       mainButtonWrapper.appendChild(mainButton);
       container.appendChild(mainButtonWrapper);
@@ -3091,10 +3113,11 @@
     function handleClick(event) {
       if (!gameState.isPlaying) return;
       
-      // 防止重複觸發（touchstart 和 touchend 可能都會觸發）
+      // 防止重複觸發（touchstart 和 click 可能都會觸發，但已通過標記處理）
+      // 保留此機制作為額外保護，防止極快速的連續觸發
       const now = Date.now();
-      if (now - lastClickTime < 50) {
-        return; // 50ms 內只處理一次
+      if (now - lastClickTime < 30) {
+        return; // 30ms 內只處理一次（行動裝置快速連點保護）
       }
       lastClickTime = now;
       
@@ -3331,24 +3354,126 @@
       });
     }
 
-    // 購買物品
+    // 購買物品狀態管理
+    let isPurchasing = false;
+    const purchasingItems = new Set(); // 追蹤正在購買的物品ID，防止重複點擊
+
+    // 購買物品（優化版：減少不必要的資料載入，添加防重複點擊機制）
     async function purchaseItem(itemId) {
+      // 確保 itemId 是數字（處理字串數字的情況）
+      const numericItemId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
+      if (isNaN(numericItemId) || numericItemId <= 0) {
+        showErrorToast('錯誤', '無效的物品ID');
+        return;
+      }
+
+      // 防止重複點擊：如果該物品正在購買中，直接返回
+      if (purchasingItems.has(numericItemId)) {
+        return;
+      }
+
+      // 防止並發購買：如果正在進行其他購買操作，提示用戶
+      if (isPurchasing) {
+        showErrorToast('提示', '請等待當前購買完成');
+        return;
+      }
+
+      // 標記為購買中
+      isPurchasing = true;
+      purchasingItems.add(numericItemId);
+
+      // 找到對應的按鈕並更新狀態
+      const button = document.querySelector(`button[onclick="purchaseItem(${numericItemId})"]`);
+      const originalButtonText = button ? button.textContent : '';
+      if (button) {
+        button.disabled = true;
+        button.textContent = '購買中...';
+      }
+
       try {
-        // 確保 itemId 是數字（處理字串數字的情況）
-        const numericItemId = typeof itemId === 'string' ? parseInt(itemId, 10) : itemId;
-        if (isNaN(numericItemId) || numericItemId <= 0) {
-          showErrorToast('錯誤', '無效的物品ID');
-          return;
-        }
         const result = await apiCall('/api/purchase/', 'POST', { item_id: numericItemId }, false, true);
+        
         if (result.success) {
-          await loadProfile();
-          await loadShop();
+          // 優化：只更新必要的資料，而不是重新載入整個商店
+          // 1. 更新玩家金幣（從回應中獲取）
+          if (gameState.userProfile) {
+            gameState.userProfile.coins = result.coins_remaining;
+            updateProfileDisplay();
+          }
+
+          // 2. 更新該物品的UI狀態（避免重新載入整個商店）
+          updateShopItemUI(numericItemId, result.new_level, result.coins_remaining, result);
+
+          // 3. 更新遊戲升級狀態（如果購買的是遊戲相關物品）
+          updateGameUpgrades();
+
           // 顯示美化的購買成功通知
           showPurchaseToast(result.item_name, result.new_level);
         }
       } catch (error) {
         // 錯誤已在 apiCall 中處理（使用 Toast）
+        // 如果購買失敗，可能需要重新載入商店以確保狀態一致
+        if (error.message && !error.message.includes('金幣不足') && !error.message.includes('已達到最大等級')) {
+          // 對於其他錯誤（如資料庫錯誤），重新載入商店以確保狀態一致
+          try {
+            await loadShop();
+          } catch (reloadError) {
+            console.error('重新載入商店失敗:', reloadError);
+          }
+        }
+      } finally {
+        // 恢復按鈕狀態
+        if (button) {
+          button.disabled = false;
+          button.textContent = originalButtonText;
+        }
+        
+        // 清除購買狀態
+        isPurchasing = false;
+        purchasingItems.delete(numericItemId);
+      }
+    }
+
+    // 更新單個商店物品的UI（優化：避免重新載入整個商店）
+    function updateShopItemUI(itemId, newLevel, coinsRemaining, purchaseResult) {
+      const container = document.getElementById('shopItemsContainer');
+      if (!container) return;
+
+      // 找到該物品的容器
+      const itemDivs = container.querySelectorAll('.shop-item');
+      for (const itemDiv of itemDivs) {
+        const button = itemDiv.querySelector('button[onclick*="purchaseItem"]');
+        if (button && button.getAttribute('onclick').includes(`purchaseItem(${itemId})`)) {
+          // 更新等級顯示
+          const levelElement = itemDiv.querySelector('.shop-item-level');
+          if (levelElement && purchaseResult.max_level) {
+            levelElement.textContent = `Lv.${newLevel}/${purchaseResult.max_level}`;
+          }
+
+          // 更新價格和按鈕狀態
+          const priceElement = itemDiv.querySelector('.shop-item-price');
+          
+          if (purchaseResult.can_upgrade && purchaseResult.next_level_price) {
+            // 可以升級，顯示下一級價格
+            priceElement.textContent = `${purchaseResult.next_level_price} 💰`;
+            button.textContent = '購買';
+            button.disabled = false;
+            itemDiv.classList.remove('disabled');
+            
+            // 移除前置條件提示（如果存在）
+            const requirementText = itemDiv.querySelector('.shop-item-requirement');
+            if (requirementText) {
+              requirementText.remove();
+            }
+          } else {
+            // 已達到最大等級
+            priceElement.textContent = '已滿級';
+            button.textContent = '已滿級';
+            button.disabled = true;
+            itemDiv.classList.add('disabled');
+          }
+          break;
+        }
       }
     }
 

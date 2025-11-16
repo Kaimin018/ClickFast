@@ -648,15 +648,32 @@ def api_purchase_item(request):
                             price_paid=0  # 免費附加
                         )
         
+        # 計算下一級價格（用於前端更新，避免重新載入商店）
+        next_level = purchase.level + 1
+        next_level_price = None
+        can_upgrade = next_level <= shop_item.max_level
+        if can_upgrade:
+            next_level_price = shop_item.base_price * next_level
+        
         return JsonResponse({
             'success': True,
             'new_level': purchase.level,
             'coins_remaining': profile.coins,
             'item_name': shop_item.name,
+            'next_level_price': next_level_price,
+            'can_upgrade': can_upgrade,
+            'max_level': shop_item.max_level,
         })
     except ShopItem.DoesNotExist:
         return JsonResponse({'error': '物品不存在'}, status=404)
     except Exception as e:
+        # 處理資料庫鎖定超時錯誤（可能是並發購買導致）
+        error_str = str(e).lower()
+        if 'lock' in error_str or 'timeout' in error_str or 'deadlock' in error_str:
+            return JsonResponse({
+                'error': '購買請求過於頻繁，請稍後再試',
+                'error_type': 'concurrent_purchase'
+            }, status=429)  # 429 Too Many Requests
         error_message = handle_database_error(e)
         return JsonResponse({'error': error_message}, status=500)
 
