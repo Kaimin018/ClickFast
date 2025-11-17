@@ -10,9 +10,11 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from game.Test_Cases.base_test_case import PostgreSQLLiveServerTestCase
+import time
 
 
-class LoginFlowTestCase(LiveServerTestCase):
+class LoginFlowTestCase(PostgreSQLLiveServerTestCase):
     """登錄流程測試類"""
 
     def setUp(self):
@@ -36,6 +38,28 @@ class LoginFlowTestCase(LiveServerTestCase):
         """測試後清理"""
         if hasattr(self, 'driver'):
             self.driver.quit()
+    
+    def _wait_for_loading_to_disappear(self, timeout=10):
+        """等待 loading modal 或 spinner 消失"""
+        try:
+            # 等待 loading modal 消失
+            self.wait.until(
+                EC.invisibility_of_element_located((By.ID, "loadingModal"))
+            )
+        except:
+            pass
+        
+        try:
+            # 等待 loading spinner 消失
+            self.wait.until(
+                lambda driver: len(driver.find_elements(By.CLASS_NAME, "loading-spinner")) == 0 or
+                              not driver.find_element(By.CLASS_NAME, "loading-spinner").is_displayed()
+            )
+        except:
+            pass
+        
+        # 額外等待一小段時間確保動畫完成
+        time.sleep(0.3)
 
     def test_user_login_flow(self):
         """測試用例：用戶登錄流程"""
@@ -55,7 +79,11 @@ class LoginFlowTestCase(LiveServerTestCase):
         
         # 點擊登錄按鈕
         login_button = self.driver.find_element(By.XPATH, "//button[contains(text(), '開始遊戲')]")
-        login_button.click()
+        # 使用 JavaScript 點擊，避免被其他元素遮擋
+        self.driver.execute_script("arguments[0].click();", login_button)
+        
+        # 等待 loading 消失
+        self._wait_for_loading_to_disappear()
         
         # 等待遊戲內容出現
         game_content = self.wait.until(

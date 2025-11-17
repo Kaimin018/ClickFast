@@ -3,7 +3,10 @@
 <head>
   <title>ClickFast</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'self';">
+  
+  <!-- Content Security Policy -->
+  <!-- 允許必要的腳本來源：Vercel Speed Insights（相對路徑，同源）、Google Analytics、Google AdSense -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://vercel.com https://www.google-analytics.com https://analytics.google.com https://pagead2.googlesyndication.com; frame-src 'self' https://googleads.g.doubleclick.net; object-src 'none'; base-uri 'self'; form-action 'self';">
   
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-CFN15J29C2"></script>
@@ -4685,6 +4688,9 @@
   </script>
   
   <!-- Vercel Speed Insights -->
-  <script defer src="https://vercel.com/speed-insights/script.js"></script>
+  <script>
+    window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>

@@ -9,9 +9,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from game.Test_Cases.base_test_case import PostgreSQLLiveServerTestCase
 
 
-class PageLoadTestCase(LiveServerTestCase):
+class PageLoadTestCase(PostgreSQLLiveServerTestCase):
     """頁面載入測試類"""
 
     def setUp(self):

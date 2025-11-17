@@ -10,6 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from game.Test_Cases.base_test_case import PostgreSQLLiveServerTestCase
 import json
 import time
 
@@ -97,7 +98,7 @@ class ValidationEdgeCasesTestCase(TestCase):
         self.assertEqual(response3.status_code, 400)
 
 
-class FrontendUnitTestCase(LiveServerTestCase):
+class FrontendUnitTestCase(PostgreSQLLiveServerTestCase):
     """前端單元測試類"""
 
     def setUp(self):

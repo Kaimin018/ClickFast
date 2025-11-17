@@ -381,3 +381,42 @@ LOGGING = {
         },
     },
 }
+
+# ============================================================================
+# 安全性設定
+# ============================================================================
+
+# X-Frame-Options: 防止點擊劫持攻擊
+# 設定為 'SAMEORIGIN' 允許同源嵌入，'DENY' 完全禁止嵌入
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+# 安全標頭設定（透過 SecurityMiddleware 自動添加）
+# 這些設定會自動添加相應的 HTTP 標頭
+if not DEBUG:
+    # 生產環境安全設定
+    SECURE_BROWSER_XSS_FILTER = True  # 啟用瀏覽器 XSS 過濾器
+    SECURE_CONTENT_TYPE_NOSNIFF = True  # 防止 MIME 類型嗅探
+    X_CONTENT_TYPE_OPTIONS = 'nosniff'  # 防止內容類型嗅探
+    
+    # HTTPS 相關設定（如果使用 HTTPS）
+    # SECURE_SSL_REDIRECT = True  # 強制 HTTPS（需要反向代理支援）
+    # SESSION_COOKIE_SECURE = True  # 只在 HTTPS 下傳送 session cookie
+    # CSRF_COOKIE_SECURE = True  # 只在 HTTPS 下傳送 CSRF cookie
+    
+    # HSTS (HTTP Strict Transport Security)
+    # SECURE_HSTS_SECONDS = 31536000  # 1 年
+    # SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    # SECURE_HSTS_PRELOAD = True
+
+# Referrer Policy: 控制 referrer 資訊的傳送
+# 'strict-origin-when-cross-origin' 是較安全的預設值
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+# Permissions Policy (舊稱 Feature Policy)
+# 限制瀏覽器功能的存取
+PERMISSIONS_POLICY = {
+    'geolocation': (),  # 禁用地理位置
+    'camera': (),  # 禁用相機
+    'microphone': (),  # 禁用麥克風
+    'payment': (),  # 禁用支付 API
+}

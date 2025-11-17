@@ -3,6 +3,7 @@
 TC_RESP_001: 手機版 viewport 設置和響應式佈局測試
 """
 from django.test import LiveServerTestCase
+from game.Test_Cases.base_test_case import PostgreSQLLiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -14,7 +15,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 
 
-class MobileViewportTestCase(LiveServerTestCase):
+class MobileViewportTestCase(PostgreSQLLiveServerTestCase):
     """手機版 Viewport 測試類"""
 
     def setUp(self):

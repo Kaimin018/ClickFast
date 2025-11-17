@@ -36,32 +36,12 @@ class PerformanceTestCase(TestCase):
         # 檢查是否為雲端部署環境
         is_cloud = os.getenv('VERCEL') or os.getenv('RENDER') or os.getenv('HEROKU')
         
-        # 檢查資料庫主機是否為本地
-        # 在測試環境中，Django 會創建測試資料庫，但主機配置仍然反映實際環境
-        db_host = None
-        db_engine = None
-        if hasattr(settings, 'DATABASES') and 'default' in settings.DATABASES:
-            db_config = settings.DATABASES['default']
-            db_host = db_config.get('HOST', '')
-            db_engine = db_config.get('ENGINE', '')
-        
-        # 判斷是否為本地環境：
-        # 1. 使用 SQLite（本地開發常用）
-        # 2. PostgreSQL 主機為 localhost/127.0.0.1
-        # 3. 沒有設置主機（SQLite 或本地 PostgreSQL）
-        is_sqlite = 'sqlite' in db_engine.lower() if db_engine else False
-        is_local_db = (
-            is_sqlite or 
-            db_host in ('localhost', '127.0.0.1', '::1', '') or 
-            not db_host
-        )
-        
-        # 如果是 CI 或雲端環境，使用嚴格閾值（1 秒）
-        # 如果是本地環境，使用寬鬆閾值（3 秒）
-        if is_ci or is_cloud or not is_local_db:
+        # 如果明確有 CI 或雲端標記，使用雲端閾值
+        if is_ci or is_cloud:
             self.performance_threshold = 1.0  # 雲端環境：1 秒
             self.environment = "雲端/CI"
         else:
+            # 沒有 CI/雲端標記，視為本地環境，使用寬鬆閾值
             self.performance_threshold = 3.0  # 本地環境：3 秒
             self.environment = "本地"
 

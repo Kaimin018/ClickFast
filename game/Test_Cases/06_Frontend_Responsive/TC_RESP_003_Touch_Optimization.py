@@ -3,6 +3,7 @@
 TC_RESP_003: 手機版觸控動作防縮放和快速連點功能測試
 """
 from django.test import LiveServerTestCase
+from game.Test_Cases.base_test_case import PostgreSQLLiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -14,7 +15,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 
 
-class TouchOptimizationTestCase(LiveServerTestCase):
+class TouchOptimizationTestCase(PostgreSQLLiveServerTestCase):
     """觸控優化測試類"""
 
     def setUp(self):
@@ -117,11 +118,16 @@ class TouchOptimizationTestCase(LiveServerTestCase):
         time.sleep(0.3)
         self._handle_alert_if_present()
         
+        # 確保沒有 loading
+        self._wait_for_loading_to_disappear()
         # 開始遊戲
         start_button = self.wait.until(
             EC.element_to_be_clickable((By.ID, "startButton"))
         )
-        start_button.click()
+        # 使用 JavaScript 點擊，避免被其他元素遮擋
+        self.driver.execute_script("arguments[0].click();", start_button)
+        # 等待 loading 消失
+        self._wait_for_loading_to_disappear()
         
         # 等待點擊按鈕啟用
         main_button = self.wait.until(

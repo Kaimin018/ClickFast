@@ -3,6 +3,7 @@
 TC_RESP_002: 手機版按鈕大小、控制佈局、統計資訊顯示測試
 """
 from django.test import LiveServerTestCase
+from game.Test_Cases.base_test_case import PostgreSQLLiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -14,7 +15,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 
 
-class MobileLayoutTestCase(LiveServerTestCase):
+class MobileLayoutTestCase(PostgreSQLLiveServerTestCase):
     """手機版佈局測試類"""
 
     def setUp(self):
@@ -88,11 +89,16 @@ class MobileLayoutTestCase(LiveServerTestCase):
         """測試用例：手機版點擊按鈕大小"""
         self._login()
         
+        # 確保沒有 loading
+        self._wait_for_loading_to_disappear()
         # 開始遊戲以啟用按鈕
         start_button = self.wait.until(
             EC.element_to_be_clickable((By.ID, "startButton"))
         )
-        start_button.click()
+        # 使用 JavaScript 點擊，避免被其他元素遮擋
+        self.driver.execute_script("arguments[0].click();", start_button)
+        # 等待 loading 消失
+        self._wait_for_loading_to_disappear()
         time.sleep(0.5)
         self._handle_alert_if_present()
         
@@ -162,11 +168,16 @@ class MobileLayoutTestCase(LiveServerTestCase):
         """測試用例：手機版模態框響應式設計"""
         self._login()
         
+        # 確保沒有 loading
+        self._wait_for_loading_to_disappear()
         # 打開商店模態框
         shop_button = self.wait.until(
             EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), '商店')]"))
         )
-        shop_button.click()
+        # 使用 JavaScript 點擊，避免被其他元素遮擋
+        self.driver.execute_script("arguments[0].click();", shop_button)
+        # 等待 loading 消失
+        self._wait_for_loading_to_disappear()
         time.sleep(0.3)
         self._handle_alert_if_present()
         

@@ -3,6 +3,7 @@ UI系統測試 - 統計資訊顯示
 TC_UI_004: 用戶統計資訊顯示和更新測試
 """
 from django.test import LiveServerTestCase
+from game.Test_Cases.base_test_case import PostgreSQLLiveServerTestCase
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -12,7 +13,7 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-class StatisticsDisplayTestCase(LiveServerTestCase):
+class StatisticsDisplayTestCase(PostgreSQLLiveServerTestCase):
     """統計資訊顯示測試類"""
 
     def setUp(self):
