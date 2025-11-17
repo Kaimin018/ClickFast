@@ -3028,6 +3028,10 @@
             document.getElementById('loadingDetails').textContent = '正在載入商店、成就和歷史記錄...';
           }
           
+          // 等待 session cookie 完全設置（避免 401 錯誤）
+          // 使用 Promise 確保 session cookie 已經被瀏覽器設置
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
           // 優化：載入完整的 profile（包含購買記錄和徽章），loadProfile 內部會並行載入其他資料
           await loadProfile();
           
@@ -3158,6 +3162,9 @@
         return;
       }
 
+      // 設置登出標記，防止並發的 loadProfile 請求
+      isLoggingOut = true;
+
       try {
         // 停止所有遊戲計時器
         if (gameState.timerInterval) {
@@ -3206,8 +3213,13 @@
         // 清除歷史記錄顯示
         document.getElementById('historyContainer').innerHTML = '<p style="color: #666;">暫無記錄</p>';
         document.getElementById('detailedHistoryContainer').innerHTML = '<p style="color: #666; text-align: center; padding: 20px;">暫無記錄</p>';
+        
+        // 重置登出標記
+        isLoggingOut = false;
       } catch (error) {
         // 即使 API 調用失敗，也執行登出操作
+        // 重置登出標記
+        isLoggingOut = false;
         gameState = {
           isPlaying: false,
           timeRemaining: 5.0,
@@ -3273,9 +3285,10 @@
 
     // 加載玩家資料
     let isReloadingProfile = false; // 防止無限遞迴
+    let isLoggingOut = false; // 標記是否正在登出
     async function loadProfile(skipAutoRelogin = false) {
-      // 如果正在重新載入，避免重複執行
-      if (isReloadingProfile) return;
+      // 如果正在重新載入或正在登出，避免重複執行
+      if (isReloadingProfile || isLoggingOut) return;
       
       try {
         // 使用靜默模式，避免未登錄時顯示錯誤訊息
@@ -3331,6 +3344,8 @@
                   document.getElementById('loadingText').textContent = '重新登入成功！';
                   document.getElementById('loadingDetails').textContent = '正在載入商店、成就和歷史記錄...';
                 }
+                // 等待 session cookie 完全設置（避免 401 錯誤）
+                await new Promise(resolve => setTimeout(resolve, 100));
                 // 重新登入成功，重新載入資料（跳過自動重新登入，避免無限遞迴）
                 await loadProfile(true);
                 
