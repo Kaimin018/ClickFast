@@ -6,12 +6,16 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.db import transaction
 from django.db import connection
+from django.db.utils import OperationalError, DatabaseError
 import json
 import traceback
+import logging
 from .models import (
     PlayerProfile, GameSession, ShopItem, 
     PlayerPurchase, Achievement, PlayerAchievement
 )
+
+logger = logging.getLogger(__name__)
 
 
 def home(request):
@@ -92,12 +96,39 @@ def api_login_or_register(request):
         
         # 登錄用戶（使用 backend 參數確保可以登錄無密碼用戶）
         # 對於無密碼用戶，必須明確指定 backend
-        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+        # 如果資料庫連接失敗或 session 保存失敗，login() 可能會拋出異常，需要捕獲
+        session_saved = True
+        try:
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+        except (OperationalError, DatabaseError) as e:
+            # 資料庫連接失敗，記錄警告但繼續處理
+            # session 保存會在 middleware 中處理，這裡只記錄警告
+            logger.warning(
+                f"登入時 Session 保存失敗（可能是資料庫連接問題）: {e}",
+                exc_info=True
+            )
+            session_saved = False
+            # 手動設置用戶到 request，確保後續邏輯可以正常執行
+            request.user = user
+        except Exception as e:
+            # 捕獲其他可能的 session 相關錯誤（如 AttributeError、ImproperlyConfigured 等）
+            error_str = str(e).lower()
+            if 'session' in error_str or 'database' in error_str or 'connection' in error_str:
+                logger.warning(
+                    f"登入時 Session 操作失敗: {e}",
+                    exc_info=True
+                )
+                session_saved = False
+                # 手動設置用戶到 request，確保後續邏輯可以正常執行
+                request.user = user
+            else:
+                # 其他未預期的錯誤，重新拋出
+                raise
         
         # 獲取或創建玩家資料
         profile = get_or_create_profile(user)
         
-        return JsonResponse({
+        response_data = {
             'success': True,
             'user': {
                 'id': user.id,
@@ -112,7 +143,13 @@ def api_login_or_register(request):
                 'best_clicks_per_round': profile.best_clicks_per_round,
                 'total_games_played': profile.total_games_played,
             }
-        })
+        }
+        
+        # 如果 session 未保存，添加警告訊息
+        if not session_saved:
+            response_data['warning'] = '登入成功，但 session 保存失敗，請稍後再試'
+        
+        return JsonResponse(response_data)
     except Exception as e:
         error_message = handle_database_error(e)
         return JsonResponse({'error': error_message}, status=500)
@@ -123,7 +160,32 @@ def api_login_or_register(request):
 def api_logout(request):
     """登出用戶"""
     try:
-        logout(request)
+        # 如果資料庫連接失敗，logout() 可能會拋出異常，需要捕獲
+        try:
+            logout(request)
+        except (OperationalError, DatabaseError) as e:
+            # 資料庫連接失敗，記錄警告但繼續處理
+            # session 清除會在 middleware 中處理，這裡只記錄警告
+            logger.warning(
+                f"登出時 Session 保存失敗（可能是資料庫連接問題）: {e}",
+                exc_info=True
+            )
+            # 手動清除用戶，確保登出邏輯正常執行
+            request.user = None
+        except Exception as e:
+            # 捕獲其他可能的 session 相關錯誤（如 AttributeError、ImproperlyConfigured 等）
+            error_str = str(e).lower()
+            if 'session' in error_str or 'database' in error_str or 'connection' in error_str:
+                logger.warning(
+                    f"登出時 Session 操作失敗: {e}",
+                    exc_info=True
+                )
+                # 手動清除用戶，確保登出邏輯正常執行
+                request.user = None
+            else:
+                # 其他未預期的錯誤，重新拋出
+                raise
+        
         return JsonResponse({'success': True})
     except Exception as e:
         error_message = handle_database_error(e)
