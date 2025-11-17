@@ -66,7 +66,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
+    'react_game.middleware.SafeSessionMiddleware',  # 使用自定義的安全 session 中間件
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -293,6 +293,8 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Session 配置 - 確保登入狀態在刷新時不會丟失
+# 明確使用資料庫後端，避免在 serverless 環境中出現 _session_cache 錯誤
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # 7 天
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = False  # 本地開發設為 False，生產環境應設為 True（HTTPS）
