@@ -2738,8 +2738,13 @@
     
     // 立即檢查登入狀態（使用 Django Session Cookie，不依賴 localStorage）
     (function() {
+      let isCheckingSession = false; // 防止重複調用
+      
       // 使用立即執行函數，在 DOM 解析時就嘗試執行
       async function checkLoginState() {
+        // 如果正在檢查，避免重複調用
+        if (isCheckingSession) return;
+        
         // 優化：先檢查是否有 Session Cookie（快速檢查）
         // 如果有 Cookie，嘗試載入資料（非阻塞）
         if (document.readyState === 'loading') {
@@ -2753,6 +2758,10 @@
       }
       
       async function checkSessionAsync() {
+        // 防止重複調用
+        if (isCheckingSession) return;
+        isCheckingSession = true;
+        
         try {
           // 使用靜默模式檢查 session（不顯示錯誤）
           const result = await fetch('/api/profile/', {
@@ -2769,6 +2778,8 @@
           }
         } catch (e) {
           // 靜默處理錯誤，不影響頁面載入
+        } finally {
+          isCheckingSession = false;
         }
       }
       

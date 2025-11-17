@@ -306,13 +306,29 @@ SESSION_SAVE_EVERY_REQUEST = True  # 每次請求都更新 session，延長過�
 import logging
 
 class SkipUnauthorizedFilter(logging.Filter):
-    """過濾掉 /api/profile/ 的 401 未登錄警告"""
+    """過濾掉 /api/profile/ 的 401 未登錄警告（這是正常行為）"""
     def filter(self, record):
         # 檢查是否是 401 錯誤且路徑是 /api/profile/
+        # 方法 1: 檢查 status_code 和 request.path
         if hasattr(record, 'status_code') and record.status_code == 401:
             if hasattr(record, 'request') and hasattr(record.request, 'path'):
                 if '/api/profile/' in record.request.path:
                     return False  # 過濾掉這個日誌
+        
+        # 方法 2: 檢查日誌訊息內容（作為備用方案）
+        if hasattr(record, 'getMessage'):
+            msg = record.getMessage().lower()
+            if '401' in msg and '/api/profile/' in msg:
+                return False  # 過濾掉這個日誌
+        
+        # 方法 3: 檢查 msg 屬性（直接字串）
+        if hasattr(record, 'msg') and isinstance(record.msg, str):
+            msg_lower = record.msg.lower()
+            if '401' in msg_lower and ('/api/profile/' in msg_lower or 'unauthorized' in msg_lower):
+                # 檢查是否包含 /api/profile/ 路徑
+                if '/api/profile/' in record.msg:
+                    return False  # 過濾掉這個日誌
+        
         return True  # 保留其他日誌
 
 class SkipBrokenPipeFilter(logging.Filter):
