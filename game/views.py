@@ -196,82 +196,99 @@ def api_logout(request):
 @require_http_methods(["GET"])
 def api_get_profile(request):
     """獲取玩家資料"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': '未登錄'}, status=401)
-    
-    profile = get_or_create_profile(request.user)
-    
-    # 優化：一次性查詢所有需要的資料，減少資料庫查詢次數
-    # 獲取玩家購買記錄（使用 select_related 優化，避免 N+1 查詢）
-    purchases = PlayerPurchase.objects.filter(user=request.user).select_related('shop_item')
-    player_items = {}
-    for purchase in purchases:
-        player_items[purchase.shop_item.item_type] = {
-            'level': purchase.level,
-            'effect_value': purchase.shop_item.effect_value * purchase.level
-        }
-    
-    # 獲取已解鎖的成就（已使用 select_related 優化）
-    achievements = PlayerAchievement.objects.filter(user=request.user).select_related('achievement')
-    unlocked_achievements = [
-        {
-            'id': ach.achievement.id,
-            'name': ach.achievement.name,
-            'icon': ach.achievement.icon,
-            'reward_claimed': ach.reward_claimed,
-        }
-        for ach in achievements
-    ]
-    
-    # 獲取用戶選擇的徽章信息（優化：合併查詢，減少資料庫往返）
-    badge_ids = [profile.badge_1_id, profile.badge_2_id, profile.badge_3_id]
-    valid_badge_ids = [bid for bid in badge_ids if bid is not None]
-    
-    # 一次性查詢所有需要的成就和解鎖狀態
-    badge_achievements = {}
-    if valid_badge_ids:
-        # 使用 values 只查詢需要的欄位，減少資料傳輸
-        achievements_dict = {
-            ach['id']: ach for ach in Achievement.objects.filter(id__in=valid_badge_ids)
-            .values('id', 'icon', 'name')
-        }
-        # 一次性查詢所有已解鎖的成就ID
-        unlocked_achievement_ids = set(
-            PlayerAchievement.objects.filter(user=request.user, achievement_id__in=valid_badge_ids)
-            .values_list('achievement_id', flat=True)
-        )
+    try:
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': '未登錄'}, status=401)
         
-        for ach_id in valid_badge_ids:
-            if ach_id in achievements_dict and ach_id in unlocked_achievement_ids:
-                ach = achievements_dict[ach_id]
-                badge_achievements[ach_id] = {
-                    'id': ach['id'],
-                    'icon': ach['icon'],
-                    'name': ach['name'],
-                }
-    
-    # 構建徽章列表
-    badges = []
-    for badge_id in badge_ids:
-        if badge_id and badge_id in badge_achievements:
-            badges.append(badge_achievements[badge_id])
-        else:
-            badges.append(None)
-    
-    return JsonResponse({
-        'profile': {
-            'username': request.user.username,
-            'created_at': profile.created_at.isoformat(),
-            'battle_wins': profile.battle_wins,
-            'coins': profile.coins,
-            'total_clicks': profile.total_clicks,
-            'best_clicks_per_round': profile.best_clicks_per_round,
-            'total_games_played': profile.total_games_played,
-        },
-        'purchases': player_items,
-        'achievements': unlocked_achievements,
-        'badges': badges,
-    })
+        profile = get_or_create_profile(request.user)
+        
+        # 優化：一次性查詢所有需要的資料，減少資料庫查詢次數
+        # 獲取玩家購買記錄（使用 select_related 優化，避免 N+1 查詢）
+        purchases = PlayerPurchase.objects.filter(user=request.user).select_related('shop_item')
+        player_items = {}
+        for purchase in purchases:
+            player_items[purchase.shop_item.item_type] = {
+                'level': purchase.level,
+                'effect_value': purchase.shop_item.effect_value * purchase.level
+            }
+        
+        # 獲取已解鎖的成就（已使用 select_related 優化）
+        achievements = PlayerAchievement.objects.filter(user=request.user).select_related('achievement')
+        unlocked_achievements = [
+            {
+                'id': ach.achievement.id,
+                'name': ach.achievement.name,
+                'icon': ach.achievement.icon,
+                'reward_claimed': ach.reward_claimed,
+            }
+            for ach in achievements
+        ]
+        
+        # 獲取用戶選擇的徽章信息（優化：合併查詢，減少資料庫往返）
+        badge_ids = [profile.badge_1_id, profile.badge_2_id, profile.badge_3_id]
+        valid_badge_ids = [bid for bid in badge_ids if bid is not None]
+        
+        # 一次性查詢所有需要的成就和解鎖狀態
+        badge_achievements = {}
+        if valid_badge_ids:
+            # 使用 values 只查詢需要的欄位，減少資料傳輸
+            achievements_dict = {
+                ach['id']: ach for ach in Achievement.objects.filter(id__in=valid_badge_ids)
+                .values('id', 'icon', 'name')
+            }
+            # 一次性查詢所有已解鎖的成就ID
+            unlocked_achievement_ids = set(
+                PlayerAchievement.objects.filter(user=request.user, achievement_id__in=valid_badge_ids)
+                .values_list('achievement_id', flat=True)
+            )
+            
+            for ach_id in valid_badge_ids:
+                if ach_id in achievements_dict and ach_id in unlocked_achievement_ids:
+                    ach = achievements_dict[ach_id]
+                    badge_achievements[ach_id] = {
+                        'id': ach['id'],
+                        'icon': ach['icon'],
+                        'name': ach['name'],
+                    }
+        
+        # 構建徽章列表
+        badges = []
+        for badge_id in badge_ids:
+            if badge_id and badge_id in badge_achievements:
+                badges.append(badge_achievements[badge_id])
+            else:
+                badges.append(None)
+        
+        return JsonResponse({
+            'profile': {
+                'username': request.user.username,
+                'created_at': profile.created_at.isoformat(),
+                'battle_wins': profile.battle_wins,
+                'coins': profile.coins,
+                'total_clicks': profile.total_clicks,
+                'best_clicks_per_round': profile.best_clicks_per_round,
+                'total_games_played': profile.total_games_played,
+            },
+            'purchases': player_items,
+            'achievements': unlocked_achievements,
+            'badges': badges,
+        })
+    except (OperationalError, DatabaseError) as e:
+        # 資料庫連接失敗，返回友好的錯誤訊息
+        logger.error(
+            f"獲取玩家資料時資料庫連接失敗: {e}",
+            exc_info=True
+        )
+        error_message = handle_database_error(e)
+        return JsonResponse({'error': error_message}, status=500)
+    except Exception as e:
+        # 其他未預期的錯誤
+        logger.error(
+            f"獲取玩家資料時發生錯誤: {e}",
+            exc_info=True
+        )
+        error_message = handle_database_error(e)
+        return JsonResponse({'error': error_message}, status=500)
 
 
 @csrf_exempt
@@ -525,59 +542,76 @@ def check_achievements(user, profile, current_clicks):
 @require_http_methods(["GET"])
 def api_get_shop(request):
     """獲取商店物品列表"""
-    items = ShopItem.objects.all()
-    shop_data = []
-    
-    # 優化：一次性查詢所有購買記錄，避免 N+1 查詢
-    purchases_dict = {}
-    extra_button_level = 0
-    if request.user.is_authenticated:
-        # 一次性查詢該用戶的所有購買記錄
-        purchases = PlayerPurchase.objects.filter(user=request.user).select_related('shop_item')
-        purchases_dict = {purchase.shop_item_id: purchase for purchase in purchases}
+    try:
+        items = ShopItem.objects.all()
+        shop_data = []
         
-        # 檢查是否有寵物夥伴
-        extra_button_item = ShopItem.objects.filter(item_type='extra_button').first()
-        if extra_button_item and extra_button_item.id in purchases_dict:
-            extra_button_level = purchases_dict[extra_button_item.id].level
-    
-    for item in items:
-        # 從字典中獲取玩家當前等級（避免單獨查詢）
-        current_level = 0
-        if request.user.is_authenticated and item.id in purchases_dict:
-            current_level = purchases_dict[item.id].level
+        # 優化：一次性查詢所有購買記錄，避免 N+1 查詢
+        purchases_dict = {}
+        extra_button_level = 0
+        if request.user.is_authenticated:
+            # 一次性查詢該用戶的所有購買記錄
+            purchases = PlayerPurchase.objects.filter(user=request.user).select_related('shop_item')
+            purchases_dict = {purchase.shop_item_id: purchase for purchase in purchases}
+            
+            # 檢查是否有寵物夥伴
+            extra_button_item = ShopItem.objects.filter(item_type='extra_button').first()
+            if extra_button_item and extra_button_item.id in purchases_dict:
+                extra_button_level = purchases_dict[extra_button_item.id].level
         
-        # 計算下一級價格（價格遞增：基礎價格 * (等級 + 1)）
-        next_level_price = item.base_price * (current_level + 1) if current_level < item.max_level else None
+        for item in items:
+            # 從字典中獲取玩家當前等級（避免單獨查詢）
+            current_level = 0
+            if request.user.is_authenticated and item.id in purchases_dict:
+                current_level = purchases_dict[item.id].level
+            
+            # 計算下一級價格（價格遞增：基礎價格 * (等級 + 1)）
+            next_level_price = item.base_price * (current_level + 1) if current_level < item.max_level else None
+            
+            # 對於寵物夥伴能力，檢查前置條件（需要寵物夥伴）
+            requires_extra_button = item.item_type == 'auto_clicker'
+            can_upgrade = current_level < item.max_level and next_level_price is not None
+            
+            # 如果沒有寵物夥伴且沒有提升能力，寵物夥伴能力不能升級
+            # 如果已經有提升能力（current_level > 0），則可以升級
+            if requires_extra_button and extra_button_level == 0 and current_level == 0:
+                can_upgrade = False
+            
+            # 判斷是否為未購買狀態（等級為0且未達到最大等級）
+            is_unpurchased = current_level == 0 and current_level < item.max_level
+            
+            shop_data.append({
+                'id': item.id,
+                'name': item.name,
+                'type': item.item_type,
+                'description': item.description,
+                'base_price': item.base_price,
+                'effect_value': item.effect_value,
+                'max_level': item.max_level,
+                'current_level': current_level,
+                'next_level_price': next_level_price,
+                'can_upgrade': can_upgrade,
+                'requires_extra_button': requires_extra_button and extra_button_level == 0 and current_level == 0,
+                'is_unpurchased': is_unpurchased,
+            })
         
-        # 對於寵物夥伴能力，檢查前置條件（需要寵物夥伴）
-        requires_extra_button = item.item_type == 'auto_clicker'
-        can_upgrade = current_level < item.max_level and next_level_price is not None
-        
-        # 如果沒有寵物夥伴且沒有提升能力，寵物夥伴能力不能升級
-        # 如果已經有提升能力（current_level > 0），則可以升級
-        if requires_extra_button and extra_button_level == 0 and current_level == 0:
-            can_upgrade = False
-        
-        # 判斷是否為未購買狀態（等級為0且未達到最大等級）
-        is_unpurchased = current_level == 0 and current_level < item.max_level
-        
-        shop_data.append({
-            'id': item.id,
-            'name': item.name,
-            'type': item.item_type,
-            'description': item.description,
-            'base_price': item.base_price,
-            'effect_value': item.effect_value,
-            'max_level': item.max_level,
-            'current_level': current_level,
-            'next_level_price': next_level_price,
-            'can_upgrade': can_upgrade,
-            'requires_extra_button': requires_extra_button and extra_button_level == 0 and current_level == 0,
-            'is_unpurchased': is_unpurchased,
-        })
-    
-    return JsonResponse({'items': shop_data})
+        return JsonResponse({'items': shop_data})
+    except (OperationalError, DatabaseError) as e:
+        # 資料庫連接失敗，返回友好的錯誤訊息
+        logger.error(
+            f"獲取商店物品列表時資料庫連接失敗: {e}",
+            exc_info=True
+        )
+        error_message = handle_database_error(e)
+        return JsonResponse({'error': error_message}, status=500)
+    except Exception as e:
+        # 其他未預期的錯誤
+        logger.error(
+            f"獲取商店物品列表時發生錯誤: {e}",
+            exc_info=True
+        )
+        error_message = handle_database_error(e)
+        return JsonResponse({'error': error_message}, status=500)
 
 
 @csrf_exempt
