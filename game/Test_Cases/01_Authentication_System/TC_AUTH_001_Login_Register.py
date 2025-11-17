@@ -166,7 +166,7 @@ class LoginRegisterTestCase(TestCase):
         self.assertEqual(data3['profile']['username'], username2)
 
     def test_concurrent_login_different_clients(self):
-        """測試用例：不同客戶端同時登入同一用戶"""
+        """測試用例：不同客戶端登入同一用戶（單一會話策略）"""
         username = 'concurrentuser'
         
         # 第一個客戶端登入
@@ -178,7 +178,11 @@ class LoginRegisterTestCase(TestCase):
         )
         self.assertEqual(response1.status_code, 200)
         
-        # 第二個客戶端登入同一個用戶
+        # 驗證第一個客戶端可以訪問 API
+        response1_profile = client1.get('/api/profile/')
+        self.assertEqual(response1_profile.status_code, 200)
+        
+        # 第二個客戶端登入同一個用戶（應該清除第一個客戶端的 session）
         client2 = Client()
         response2 = client2.post(
             self.base_url,
@@ -187,12 +191,16 @@ class LoginRegisterTestCase(TestCase):
         )
         self.assertEqual(response2.status_code, 200)
         
-        # 驗證兩個客戶端都可以訪問自己的 session
+        # 驗證第一個客戶端的 session 已被清除，無法再訪問 API（單一會話策略）
         response3 = client1.get('/api/profile/')
-        self.assertEqual(response3.status_code, 200)
+        self.assertEqual(response3.status_code, 401, 
+                        '第一個客戶端的 session 應該已被清除，無法訪問 API')
         
+        # 驗證第二個客戶端可以訪問 API
         response4 = client2.get('/api/profile/')
         self.assertEqual(response4.status_code, 200)
+        data4 = json.loads(response4.content)
+        self.assertEqual(data4['profile']['username'], username)
         
         # 驗證只創建了一個用戶
         user_count = User.objects.filter(username=username).count()
