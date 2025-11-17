@@ -4,9 +4,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.sessions.models import Session
 from django.db import transaction
 from django.db import connection
 from django.db.utils import OperationalError, DatabaseError
+from django.utils import timezone
 import json
 import traceback
 import logging
@@ -93,6 +95,39 @@ def api_login_or_register(request):
             if not user.password:
                 user.set_unusable_password()
                 user.save(update_fields=['password'])  # 只更新 password 欄位
+            
+            # 單一會話策略：清除該用戶的其他活躍 session（只對已存在的用戶執行）
+            # 這樣可以確保同一帳號只能在一處登入，避免多裝置同時操作造成的資料衝突
+            try:
+                # 獲取所有活躍的 session（未過期的）
+                active_sessions = Session.objects.filter(
+                    expire_date__gte=timezone.now()
+                )
+                
+                # 遍歷所有 session，找出屬於該用戶的 session 並刪除
+                deleted_count = 0
+                for session in active_sessions:
+                    try:
+                        session_data = session.get_decoded()
+                        # 檢查 session 中是否包含該用戶的 ID
+                        if session_data.get('_auth_user_id') == str(user.id):
+                            session.delete()
+                            deleted_count += 1
+                    except Exception as e:
+                        # 如果 session 資料解碼失敗，跳過該 session
+                        # 這可能是因為 session 資料格式不正確或已損壞
+                        logger.debug(f"無法解碼 session {session.session_key}: {e}")
+                        continue
+                
+                if deleted_count > 0:
+                    logger.info(f"用戶 {username} 登入時已清除 {deleted_count} 個其他活躍會話")
+            except Exception as e:
+                # 如果清除 session 失敗，記錄警告但繼續登入流程
+                # 這不會影響用戶登入，只是可能無法清除舊會話
+                logger.warning(
+                    f"清除用戶 {username} 的其他會話時發生錯誤: {e}",
+                    exc_info=True
+                )
         
         # 登錄用戶（使用 backend 參數確保可以登錄無密碼用戶）
         # 對於無密碼用戶，必須明確指定 backend
