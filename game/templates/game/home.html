@@ -4760,32 +4760,10 @@
     });
   </script>
   
-  <!-- Vercel Speed Insights -->
+  <!-- Vercel Speed Insights - 按照官方建議-->
   <script>
-    (function() {
-      try {
-        // 初始化 Speed Insights 函數
-        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
-        
-        // 動態載入 Speed Insights 腳本
-        const script = document.createElement('script');
-        script.defer = true;
-        script.src = '/_vercel/speed-insights/script.js';
-        
-        script.onload = () => {
-          // 載入成功
-        };
-        
-        script.onerror = () => {
-          // 靜默處理錯誤，不顯示控制台錯誤
-          console.debug('Vercel Speed Insights 被阻擋或載入失敗');
-        };
-        
-        document.head.appendChild(script);
-      } catch (error) {
-        console.debug('Vercel Speed Insights 載入失敗:', error);
-      }
-    })();
+    window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
   </script>
+  <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
