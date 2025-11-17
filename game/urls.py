@@ -14,4 +14,9 @@ urlpatterns = [
     path('api/update-badges/', views.api_update_badges, name='api_update_badges'),
     path('api/rollback-shop-level/', views.api_rollback_shop_level, name='api_rollback_shop_level'),
     path('api/rollback-all-shop-items/', views.api_rollback_all_shop_items, name='api_rollback_all_shop_items'),
+    # 處理 favicon 和 apple-touch-icon 請求，避免 404 錯誤
+    path('favicon.ico', views.favicon_handler, name='favicon'),
+    path('favicon.png', views.favicon_handler, name='favicon_png'),
+    path('apple-touch-icon.png', views.favicon_handler, name='apple_touch_icon'),
+    path('apple-touch-icon-precomposed.png', views.favicon_handler, name='apple_touch_icon_precomposed'),
 ]

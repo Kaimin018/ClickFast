@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.contrib.auth.models import User
@@ -16,6 +16,15 @@ from .models import (
 
 def home(request):
     return render(request, 'game/home.html')
+
+
+def favicon_handler(request):
+    """處理 favicon 和 apple-touch-icon 請求，避免 404 錯誤
+    
+    瀏覽器和 iOS 設備會自動請求這些圖標檔案，如果不存在會產生 404 錯誤。
+    此視圖返回 204 No Content，表示請求成功但沒有內容返回。
+    """
+    return HttpResponse(status=204)
 
 
 def handle_database_error(e):
