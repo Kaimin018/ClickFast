@@ -8,18 +8,76 @@
   <!-- 允許必要的腳本來源：Vercel Speed Insights（相對路徑，同源）、Google Analytics、Google AdSense -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://vercel.com https://www.google-analytics.com https://analytics.google.com https://pagead2.googlesyndication.com; frame-src 'self' https://googleads.g.doubleclick.net; object-src 'none'; base-uri 'self'; form-action 'self';">
   
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CFN15J29C2"></script>
+  <!-- 動態載入第三方腳本（避免廣告阻擋器錯誤） -->
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-CFN15J29C2');
+    // 動態載入腳本的函數
+    function loadScript(src, options = {}) {
+      return new Promise((resolve, reject) => {
+        try {
+          const script = document.createElement('script');
+          script.async = options.async !== false;
+          script.defer = options.defer || false;
+          script.src = src;
+          if (options.crossOrigin) {
+            script.crossOrigin = options.crossOrigin;
+          }
+          
+          script.onload = () => resolve();
+          script.onerror = () => {
+            // 靜默處理錯誤，不顯示控制台錯誤
+            if (options.onError) {
+              options.onError();
+            }
+            reject(new Error('Script blocked or failed to load'));
+          };
+          
+          document.head.appendChild(script);
+        } catch (error) {
+          if (options.onError) {
+            options.onError();
+          }
+          reject(error);
+        }
+      });
+    }
+
+    // 動態載入 Google Tag Manager
+    (function() {
+      try {
+        // 初始化 dataLayer 和 gtag 函數
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        window.gtag = gtag;
+        gtag('js', new Date());
+        gtag('config', 'G-CFN15J29C2');
+        
+        // 動態載入 gtag.js
+        loadScript('https://www.googletagmanager.com/gtag/js?id=G-CFN15J29C2', {
+          async: true,
+          onError: () => console.debug('Google Tag Manager 被阻擋或載入失敗')
+        }).catch(() => {
+          // 靜默處理，不顯示錯誤
+        });
+      } catch (error) {
+        console.debug('Google Tag Manager 初始化失敗:', error);
+      }
+    })();
+
+    // 動態載入 Google AdSense
+    (function() {
+      try {
+        loadScript('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4564506742193898', {
+          async: true,
+          crossOrigin: 'anonymous',
+          onError: () => console.debug('Google AdSense 被阻擋或載入失敗')
+        }).catch(() => {
+          // 靜默處理，不顯示錯誤
+        });
+      } catch (error) {
+        console.debug('Google AdSense 載入失敗:', error);
+      }
+    })();
   </script>
-  
-  <!-- Google AdSense -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4564506742193898"
-     crossorigin="anonymous"></script>
   
   <style>
     * {
@@ -4689,8 +4747,30 @@
   
   <!-- Vercel Speed Insights -->
   <script>
-    window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+    (function() {
+      try {
+        // 初始化 Speed Insights 函數
+        window.si = window.si || function () { (window.siq = window.siq || []).push(arguments); };
+        
+        // 動態載入 Speed Insights 腳本
+        const script = document.createElement('script');
+        script.defer = true;
+        script.src = '/_vercel/speed-insights/script.js';
+        
+        script.onload = () => {
+          // 載入成功
+        };
+        
+        script.onerror = () => {
+          // 靜默處理錯誤，不顯示控制台錯誤
+          console.debug('Vercel Speed Insights 被阻擋或載入失敗');
+        };
+        
+        document.head.appendChild(script);
+      } catch (error) {
+        console.debug('Vercel Speed Insights 載入失敗:', error);
+      }
+    })();
   </script>
-  <script defer src="/_vercel/speed-insights/script.js"></script>
 </body>
 </html>
